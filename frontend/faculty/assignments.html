@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Assignments & AI | OBE System – MITAOE</title>
+  <meta name="description" content="AI-powered assignment management for faculty">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800" rel="stylesheet">
+  <link rel="stylesheet" href="../styles/main.css?v=6">
+  <link rel="stylesheet" href="../styles/components.css?v=6">
+  <style>
+    .asgn-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); padding: var(--sp-lg); transition: all var(--t-base); }
+    .asgn-card:hover { border-color: rgba(99,102,241,.3); transform: translateY(-2px); box-shadow: var(--shadow-md); }
+    .asgn-card-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: var(--sp-md); }
+    .asgn-no { width:36px;height:36px;background:var(--primary);border-radius:var(--r-md);display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;flex-shrink:0; }
+    .ai-meter { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-md); padding: var(--sp-md); }
+    .qrow { display:grid; grid-template-columns: 40px 1fr 80px 80px 80px 44px; gap: var(--sp-sm); align-items:center; margin-bottom:var(--sp-sm); }
+    .rubric-row { display:grid; grid-template-columns: 1fr 80px 1fr 1fr 1fr; gap: var(--sp-sm); margin-bottom:var(--sp-sm); }
+    .sub-row { display:flex; justify-content:space-between; align-items:center; padding:10px var(--sp-md); border-radius:var(--r-md); background:var(--surface); margin-bottom:6px; }
+    .ai-result-box { background:rgba(99,102,241,.07);border:1px solid rgba(99,102,241,.2);border-radius:var(--r-md);padding:var(--sp-md);margin-top:var(--sp-md); }
+    .wide-modal .modal { max-width: 880px !important; }
+  </style>
+</head>
+<body>
+<div class="app-shell">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">OBE</div>
+      <div><div class="logo-text">OBE System</div><div class="logo-sub">MITAOE</div></div>
+    </div>
+    <nav class="sidebar-nav">
+      <p class="nav-section-label">Overview</p>
+      <a class="nav-item" href="dashboard.html">📊 Dashboard</a>
+      <a class="nav-item" href="courses.html">📚 My Courses</a>
+      <p class="nav-section-label">Course Management</p>
+      <a class="nav-item" href="syllabus.html">📖 Syllabus Setup</a>
+      <a class="nav-item" href="outcomes.html">🎯 CO & PO Setup</a>
+      <a class="nav-item" href="co-po-map.html">🗺️ CO-PO Mapping</a>
+      <a class="nav-item" href="6a-matrix.html">📋 6A Indicator Mapping</a>
+      <a class="nav-item" href="students.html">👥 Students</a>
+      <p class="nav-section-label">Assessment</p>
+      <a class="nav-item" href="marks.html">📝 Marks Entry</a>
+      <a class="nav-item" href="attainment.html">📈 Attainment</a>
+      <a class="nav-item active" href="assignments.html">🤖 Assignments & AI</a>
+      <a class="nav-item" href="question-paper.html">📄 Question Paper</a>
+      <a class="nav-item" href="reports.html">📄 Reports & Export</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="user-avatar"></div>
+        <div><div class="user-name"></div><div class="user-role"></div></div>
+      </div>
+      <button class="btn btn-ghost btn-sm w-full" data-action="logout" style="margin-top:8px">🚪 Logout</button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main-content">
+    <header class="topbar">
+      <div class="topbar-left">
+        <h1 class="topbar-title">Assignments & AI</h1>
+        <div class="topbar-breadcrumb">Assessment <span>&rsaquo;</span> Assignments</div>
+      
+      </div>
+      <div class="topbar-right">
+        <select id="courseSelect" class="form-control" style="width:210px">
+          <option value="">Select Course…</option>
+        </select>
+        <button class="btn btn-secondary" id="moodleBtn" onclick="openMoodleModal()">📥 Grade Moodle Export</button>
+        <button class="btn btn-primary" id="createBtn">➕ Create Assignment</button>
+      </div>
+    </header>
+
+    <div class="page-content">
+      <!-- AI Meter + Stats Row -->
+      <div class="grid-2" style="margin-bottom:var(--sp-lg)">
+        <div class="ai-meter">
+          <div class="flex-between" style="margin-bottom:var(--sp-sm)">
+            <div>
+              <div style="font-size:13px;font-weight:700">🤖 AI Usage This Month</div>
+              <div id="aiStatusText" style="font-size:11px;color:var(--text-secondary);margin-top:2px"></div>
+            </div>
+            <div id="aiCallsCount" style="font-size:22px;font-weight:800;color:var(--primary)"></div>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" id="aiProgressFill" style="width:0%"></div>
+          </div>
+          <div class="flex-between mt-sm" style="font-size:11px;color:var(--text-muted)">
+            <span>0 calls</span><span id="aiMaxCalls"></span>
+          </div>
+        </div>
+        <div class="card" style="padding:var(--sp-md)">
+          <div class="flex gap-lg">
+            <div style="text-align:center;flex:1">
+              <div style="font-size:28px;font-weight:800;color:var(--primary)" id="statTotal">0</div>
+              <div style="font-size:12px;color:var(--text-secondary)">Total Assignments</div>
+            </div>
+            <div style="text-align:center;flex:1">
+              <div style="font-size:28px;font-weight:800;color:var(--success)" id="statAI">0</div>
+              <div style="font-size:12px;color:var(--text-secondary)">AI Generated</div>
+            </div>
+            <div style="text-align:center;flex:1">
+              <div style="font-size:28px;font-weight:800;color:var(--warning)" id="statSubs">0</div>
+              <div style="font-size:12px;color:var(--text-secondary)">Submissions</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Assignments Grid -->
+      <div id="emptyState" class="empty-state hidden">
+        <div class="empty-icon">📝</div>
+        <h3>No Assignments Yet</h3>
+        <p>Create your first assignment manually or use AI to generate questions based on Course Outcomes and RBT levels.</p>
+        <button class="btn btn-primary" onclick="document.getElementById('createBtn').click()">➕ Create First Assignment</button>
+      </div>
+      <div id="assignGrid" class="grid-auto"></div>
+    </div>
+  </main>
+</div>
+
+<div id="toast-container"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+<script>pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.5.1/mammoth.browser.min.js"></script>
+<script src="../scripts/data.js?v=2"></script>`r`n<script src="../scripts/api.js"></script>
+<script src="../scripts/auth.js?v=2"></script>
+<script src="../scripts/attainment.js"></script>
+<script src="../scripts/utils.js"></script>
+<script src="../scripts/ai-mock.js?v=2"></script>
+<script>
+(async () => {
+  await (window._apiReady || Promise.resolve());
+  const user = Auth.requireAuth(['faculty', 'hod']);
+  if (!user) throw new Error('Not authorized');
+  Auth.populateSidebar(user);
+
+  let currentCourseId = null;
+  let currentAssignments = [];
+  let aiResult = null;
+
+  function updateAIMeter() {
+    const stats = AI.getUsageStats();
+    document.getElementById('aiCallsCount').textContent = `${stats.used}/${stats.max}`;
+    document.getElementById('aiStatusText').textContent = stats.enabled ? '✅ AI Enabled (Mock Phase 1)' : '⚠️ AI Disabled – Enable in Admin Config';
+    document.getElementById('aiMaxCalls').textContent = `${stats.max} max`;
+    const fill = document.getElementById('aiProgressFill');
+    fill.style.width = stats.pct + '%';
+    fill.className = 'progress-fill' + (stats.pct > 80 ? ' warning' : '');
+  }
+
+  function loadCourses() {
+    const sel = document.getElementById('courseSelect');
+    const courses = DB.courses.byFaculty(user.id);
+    courses.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.id; opt.textContent = `${c.code} – ${c.name}`;
+      sel.appendChild(opt);
+    });
+    const saved = sessionStorage.getItem('selected_course_id');
+    if (saved) sel.value = saved;
+    else if (courses.length) sel.value = courses[0].id;
+    currentCourseId = sel.value;
+    renderAssignments();
+  }
+
+  function renderAssignments() {
+    if (!currentCourseId) { document.getElementById('assignGrid').innerHTML = ''; return; }
+    sessionStorage.setItem('selected_course_id', currentCourseId);
+    
+    const course = DB.courses.byId(currentCourseId);
+    const isLocked = course?.isLocked;
+    if (isLocked) {
+      document.getElementById('createBtn').style.display = 'none';
+      Toast.warning('Course is locked. Assignment creation disabled.');
+    } else {
+      document.getElementById('createBtn').style.display = 'inline-flex';
+    }
+
+    currentAssignments = DB.assignments.byCourse(currentCourseId);
+    const grid = document.getElementById('assignGrid');
+    const empty = document.getElementById('emptyState');
+
+    const subs = DB.submissions.all();
+    document.getElementById('statTotal').textContent = currentAssignments.length;
+    document.getElementById('statAI').textContent = currentAssignments.filter(a=>a.aiGenerated).length;
+    document.getElementById('statSubs').textContent = subs.filter(s => currentAssignments.some(a=>a.id===s.assignmentId)).length;
+
+    if (!currentAssignments.length) { grid.innerHTML=''; empty.classList.remove('hidden'); return; }
+    empty.classList.add('hidden');
+
+    grid.innerHTML = currentAssignments.map(a => {
+      const subCount = subs.filter(s=>s.assignmentId===a.id).length;
+      const isOverdue = new Date(a.dueDate) < new Date();
+      return `
+        <div class="asgn-card">
+          <div class="asgn-card-header">
+            <div class="flex gap-sm" style="align-items:flex-start">
+              <div class="asgn-no">${a.no||'?'}</div>
+              <div>
+                <div style="font-weight:700;font-size:15px;line-height:1.3">${a.title}</div>
+                <div style="font-size:12px;color:var(--text-secondary);margin-top:2px">Due: <strong>${Fmt.date(a.dueDate)}</strong></div>
+              </div>
+            </div>
+            <div class="flex gap-sm flex-col" style="align-items:flex-end">
+              ${a.aiGenerated ? '<span class="badge badge-primary">🤖 AI</span>' : ''}
+              ${isOverdue ? '<span class="badge badge-danger">Overdue</span>' : '<span class="badge badge-success">Active</span>'}
+            </div>
+          </div>
+          <p style="font-size:13px;color:var(--text-secondary);margin-bottom:var(--sp-md);line-height:1.5">${a.description}</p>
+          <div class="flex gap-sm flex-wrap" style="margin-bottom:var(--sp-md)">
+            ${(a.coNos||[]).map(c=>`<span class="badge badge-info">CO${c}</span>`).join('')}
+            <span class="badge badge-muted">RBT L${a.rbtLevel||'?'}</span>
+            <button class="btn btn-secondary btn-sm" onclick="viewSubmissions('${a.id}')">👥 Submissions (${subCount})</button>
+            <button class="btn btn-ghost btn-sm" onclick="editAssignment('${a.id}')">✏️ Edit</button>
+            <button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="deleteAssignment('${a.id}')">🗑️</button>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  function deleteAssignment(id) {
+    const a = DB.assignments.byId(id);
+    confirmDelete(a.title, () => {
+      DB.assignments.delete(id);
+      renderAssignments();
+      Toast.success('Assignment deleted.');
+    });
+  }
+
+  function viewSubmissions(assignId) {
+    const a = DB.assignments.byId(assignId);
+    const subs = DB.submissions.byAssignment(assignId);
+    const students = DB.students.byCourse(currentCourseId);
+    let rows = subs.length ? subs.map(s => {
+      const stu = students.find(x=>x.prn===s.prn);
+      return `<div class="sub-row">
+        <div>
+          <div style="font-weight:600">${stu?stu.name:s.prn}</div>
+          <div style="font-size:12px;color:var(--text-secondary)">${s.prn} • ${Fmt.date(s.submittedAt)}</div>
+        </div>
+        <div class="flex gap-sm align-items-center">
+          ${s.aiFeedback ? `<span class="badge badge-primary">AI Graded: ${s.aiFeedback.percentage}%</span>` : ''}
+          ${s.marks !== undefined && s.marks !== null ? `<span class="badge badge-success">${s.marks}/${a.maxMarks}</span>` : '<span class="badge badge-muted">Pending</span>'}
+          <button class="btn btn-sm btn-primary" onclick="gradeSubmission('${s.id}','${assignId}')">Grade</button>
+        </div>
+      </div>`;
+    }).join('') : `<div class="empty-state" style="padding:var(--sp-xl)"><div class="empty-icon">📭</div><h3>No Submissions Yet</h3></div>`;
+
+    Modal.open(`
+      <div class="modal-header">
+        <h3 class="modal-title">📋 Submissions – ${a.title}</h3>
+        <button class="modal-close" onclick="Modal.close()">✕</button>
+      </div>
+      <div style="font-size:13px;color:var(--text-secondary);margin-bottom:var(--sp-md)">${subs.length} submission(s) received</div>
+      ${rows}
+      <div class="modal-footer"><button class="btn btn-secondary" onclick="Modal.close()">Close</button></div>
+    `, {wide:true});
+  }
+
+  function gradeSubmission(subId, assignId) {
+    const sub = DB.submissions.all().find(s=>s.id===subId);
+    const a = DB.assignments.byId(assignId);
+    if (!sub) return;
+    Modal.open(`
+      <div class="modal-header">
+        <h3 class="modal-title">✏️ Grade Submission</h3>
+        <button class="modal-close" onclick="Modal.close()">✕</button>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Submitted Answer</label>
+        <div style="background:var(--surface);border-radius:var(--r-md);padding:var(--sp-md);font-size:13px;color:var(--text-secondary);max-height:200px;overflow-y:auto">${sub.text||'<em>No text submitted</em>'}</div>
+      </div>
+      ${sub.aiFeedback ? `<div class="ai-result-box"><strong>🤖 AI Feedback:</strong> ${sub.aiFeedback.overallFeedback} (${sub.aiFeedback.percentage}%)</div>` : ''}
+      <div class="form-group">
+        <label class="form-label">Manual Marks (out of ${a.maxMarks})</label>
+        <input type="number" class="form-control" id="manualMarks" min="0" max="${a.maxMarks}" value="${sub.marks||''}">
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="Modal.close()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveGrade('${subId}', ${a.maxMarks})">💾 Save Grade</button>
+      </div>
+    `);
+  }
+
+  function saveGrade(subId, maxMarks) {
+    const v = parseFloat(document.getElementById('manualMarks').value);
+    if (isNaN(v) || v < 0 || v > maxMarks) { Toast.error(`Marks must be 0–${maxMarks}`); return; }
+    const sub = DB.submissions.all().find(s=>s.id===subId);
+    sub.marks = v; sub.gradedAt = new Date().toISOString();
+    DB.submissions.update(sub);
+    Modal.close();
+    Toast.success('Grade saved!');
+    renderAssignments();
+  }
+
+  // Edit assignment
+  function editAssignment(id) {
+    const a = DB.assignments.byId(id);
+    openCreateModal(a);
+  }
+
+  // Create/Edit modal
+  function openCreateModal(existing) {
+    const isEdit = !!existing;
+    const cos = DB.cos.byCourse(currentCourseId).filter(c=>c.text);
+
+    const modalHtml = `
+      <div class="modal-header">
+        <h3 class="modal-title">${isEdit ? '✏️ Edit Assignment' : '➕ Create Assignment'}</h3>
+        <button class="modal-close" onclick="Modal.close()">✕</button>
+      </div>
+
+      <div class="tabs" id="createTabs" style="margin-bottom:var(--sp-lg)">
+        <button class="tab-btn" data-tab="manualTab">📝 Manual</button>
+        <button class="tab-btn" data-tab="aiTab">🤖 AI Generate</button>
+      </div>
+
+      <!-- MANUAL TAB -->
+      <div class="tab-content" id="manualTab">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Assignment No.</label>
+            <input type="number" class="form-control" id="aNo" value="${existing?.no||''}" min="1">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Max Marks</label>
+            <input type="number" class="form-control" id="aMaxMarks" value="${existing?.maxMarks||10}" min="1">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Title *</label>
+          <input type="text" class="form-control" id="aTitle" value="${existing?.title||''}" placeholder="Assignment title">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <textarea class="form-control" id="aDesc" rows="2">${existing?.description||''}</textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">CO Numbers (comma-separated)</label>
+            <input type="text" class="form-control" id="aCoNos" value="${existing?.coNos?.join(',')||''}" placeholder="1,2,3">
+          </div>
+          <div class="form-group">
+            <label class="form-label">RBT Level</label>
+            <select class="form-control" id="aRbt">
+              ${['L1','L2','L3','L4','L5','L6'].map(l=>`<option value="${l.replace('L','')}" ${existing?.rbtLevel==l.replace('L','') ? 'selected':''}>RBT ${l}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Due Date</label>
+            <input type="date" class="form-control" id="aDue" value="${existing?.dueDate||''}">
+          </div>
+        </div>
+
+        <div style="margin-top:var(--sp-md)">
+          <div class="flex-between" style="margin-bottom:var(--sp-sm)">
+            <strong style="font-size:13px">Questions</strong>
+            <button class="btn btn-secondary btn-sm" onclick="addQRow()">+ Add Question</button>
+          </div>
+          <div id="questionsArea">
+            <div class="qrow" style="font-size:11px;color:var(--text-secondary);font-weight:600">
+              <span>#</span><span>Question Text</span><span>Marks</span><span>CO No.</span><span>RBT</span><span></span>
+            </div>
+            ${(existing?.questions||[{qNo:1,text:'',marks:5,coNo:1}]).map((q,i) => qRowHtml(i, q)).join('')}
+          </div>
+        </div>
+
+        <div style="margin-top:var(--sp-md)">
+          <div class="flex-between" style="margin-bottom:var(--sp-sm)">
+            <strong style="font-size:13px">Rubrics</strong>
+            <button class="btn btn-secondary btn-sm" onclick="addRubricRow()">+ Add Rubric</button>
+          </div>
+          <div id="rubricsArea">
+            <div class="rubric-row" style="font-size:11px;color:var(--text-secondary);font-weight:600">
+              <span>Criterion</span><span>CO No.</span><span>Exceptional</span><span>Best</span><span>Average/Low</span>
+            </div>
+            ${(existing?.rubrics||[]).map((r,i)=>rubricRowHtml(i,r)).join('')}
+          </div>
+        </div>
+      </div>
+
+      <!-- AI TAB -->
+      <div class="tab-content" id="aiTab">
+        <div class="alert alert-info" style="margin-bottom:var(--sp-md)">
+          <span>🤖</span><span>AI will generate questions and rubrics based on your CO text and RBT level. Review before saving.</span>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">CO Text / Topic</label>
+            <input type="text" class="form-control" id="aiCoText" placeholder="e.g., Hypothesis Testing using data analysis tools">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Topic / Keyword</label>
+            <input type="text" class="form-control" id="aiTopic" placeholder="e.g., t-test, regression, clustering">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">RBT Level</label>
+            <select class="form-control" id="aiRbt">
+              ${['L3','L4','L5','L6','L1','L2'].map(l=>`<option value="${l}">RBT ${l} – ${Fmt.bloom(l)}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Number of Questions</label>
+            <input type="number" class="form-control" id="aiNumQ" value="2" min="1" max="6">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Max Marks</label>
+            <input type="number" class="form-control" id="aiMaxMarks" value="10" min="1">
+          </div>
+        </div>
+        <button class="btn btn-primary w-full" id="aiGenBtn" onclick="generateWithAI()">🤖 Generate with AI</button>
+        <div id="aiResultArea"></div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="Modal.close()">Cancel</button>
+        <button class="btn btn-success" id="saveAsgnBtn" onclick="saveAssignment('${existing?.id||''}')">💾 Save Assignment</button>
+      </div>`;
+
+    Modal.open(modalHtml, {wide:true, persistent:false});
+    initTabs(document.getElementById('createTabs').parentElement);
+  }
+
+  let qCount = 1;
+  function qRowHtml(i, q) {
+    return `<div class="qrow" id="qrow-${i}">
+      <span style="font-weight:700;color:var(--text-secondary)">${i+1}</span>
+      <input type="text" class="form-control" style="font-size:12px" placeholder="Question text…" value="${(q.text||'').replace(/"/g,'&quot;')}" data-q="text" data-idx="${i}">
+      <input type="number" class="form-control" style="font-size:12px" min="1" value="${q.marks||5}" data-q="marks" data-idx="${i}">
+      <input type="number" class="form-control" style="font-size:12px" min="1" max="6" placeholder="CO#" value="${q.coNo||''}" data-q="coNo" data-idx="${i}">
+      <select class="form-control" style="font-size:12px" data-q="rbt" data-idx="${i}">
+        ${['L1','L2','L3','L4','L5','L6'].map(l=>`<option ${(q.rbt||'L3')===l?'selected':''} value="${l}">${l}</option>`).join('')}
+      </select>
+      <button class="btn btn-ghost btn-sm btn-icon" style="color:var(--danger)" onclick="this.closest('.qrow').remove()">✕</button>
+    </div>`;
+  }
+  function addQRow() {
+    const area = document.getElementById('questionsArea');
+    const count = area.querySelectorAll('.qrow[id]').length;
+    const tmp = document.createElement('div'); tmp.innerHTML = qRowHtml(count, {});
+    area.appendChild(tmp.firstElementChild);
+  }
+
+  function rubricRowHtml(i, r) {
+    return `<div class="rubric-row" id="rubric-${i}">
+      <input class="form-control" style="font-size:12px" placeholder="Criterion" value="${(r.criterion||'').replace(/"/g,'&quot;')}" data-r="criterion">
+      <input class="form-control" style="font-size:12px" type="number" placeholder="CO#" value="${r.coNo||''}" data-r="coNo">
+      <input class="form-control" style="font-size:12px" placeholder="Exceptional (full)" value="${(r.exceptional||'').replace(/"/g,'&quot;')}" data-r="exceptional">
+      <input class="form-control" style="font-size:12px" placeholder="Best" value="${(r.best||'').replace(/"/g,'&quot;')}" data-r="best">
+      <input class="form-control" style="font-size:12px" placeholder="Average / Low" value="${(r.average||'').replace(/"/g,'&quot;')}" data-r="average">
+    </div>`;
+  }
+  function addRubricRow() {
+    const area = document.getElementById('rubricsArea');
+    const count = area.querySelectorAll('.rubric-row[id]').length;
+    const tmp = document.createElement('div'); tmp.innerHTML = rubricRowHtml(count, {});
+    area.appendChild(tmp.firstElementChild);
+  }
+
+  async function generateWithAI() {
+    const coText = document.getElementById('aiCoText').value.trim();
+    const topic = document.getElementById('aiTopic').value.trim();
+    const rbt = document.getElementById('aiRbt').value;
+    const numQ = parseInt(document.getElementById('aiNumQ').value) || 2;
+    const maxMarks = parseInt(document.getElementById('aiMaxMarks').value) || 10;
+    if (!coText || !topic) { Toast.warning('Please fill in CO text and topic.'); return; }
+
+    const btn = document.getElementById('aiGenBtn');
+    btnLoading(btn, true);
+    document.getElementById('aiResultArea').innerHTML = '';
+
+    try {
+      aiResult = await AI.generateAssignment({ coText, rbtLevel: rbt, topic, numQuestions: numQ, maxMarks });
+      updateAIMeter();
+      document.getElementById('aiResultArea').innerHTML = `
+        <div class="ai-result-box">
+          <div class="flex-between" style="margin-bottom:var(--sp-md)">
+            <strong>🤖 AI Generated Questions</strong>
+            <span class="badge badge-primary">Model: ${aiResult.model}</span>
+          </div>
+          <div class="alert alert-warning" style="margin-bottom:var(--sp-md);font-size:12px">${aiResult.note}</div>
+          ${aiResult.questions.map((q,i)=>`
+            <div style="margin-bottom:var(--sp-md);padding:var(--sp-md);background:var(--surface-2);border-radius:var(--r-md)">
+              <div style="font-weight:700;margin-bottom:6px">Q${q.qNo} (${q.marks} marks)</div>
+              <textarea class="form-control" rows="2" id="aiQ${i}">${q.text}</textarea>
+            </div>`).join('')}
+          <button class="btn btn-success w-full mt-md" onclick="applyAIResult()">✅ Use These Questions → Fill Manual Form</button>
+        </div>`;
+      Toast.success('AI generated questions successfully!');
+    } catch(e) {
+      Toast.error(e.message);
+    } finally {
+      btnLoading(btn, false);
+    }
+  }
+
+  function applyAIResult() {
+    if (!aiResult) return;
+    // Switch to manual tab
+    document.querySelector('[data-tab="manualTab"]').click();
+    const area = document.getElementById('questionsArea');
+    // Clear existing q rows
+    area.querySelectorAll('.qrow[id]').forEach(r=>r.remove());
+    aiResult.questions.forEach((q,i) => {
+      const tmp = document.createElement('div');
+      tmp.innerHTML = qRowHtml(i, {...q, text: document.getElementById('aiQ'+i)?.value || q.text});
+      area.appendChild(tmp.firstElementChild);
+    });
+    const rArea = document.getElementById('rubricsArea');
+    rArea.querySelectorAll('.rubric-row[id]').forEach(r=>r.remove());
+    aiResult.rubrics.forEach((r,i) => {
+      const tmp = document.createElement('div'); tmp.innerHTML = rubricRowHtml(i, r);
+      rArea.appendChild(tmp.firstElementChild);
+    });
+    document.getElementById('aMaxMarks').value = parseInt(document.getElementById('aiMaxMarks').value)||10;
+    Toast.info('Questions applied to manual form. Review and save.');
+  }
+
+  function saveAssignment(existingId) {
+    const title = document.getElementById('aTitle')?.value?.trim();
+    if (!title) { Toast.error('Assignment title is required.'); return; }
+
+    const questions = [];
+    document.querySelectorAll('.qrow[id]').forEach((row,i) => {
+      questions.push({
+        qNo: i+1,
+        text: row.querySelector('[data-q="text"]')?.value||'',
+        marks: parseFloat(row.querySelector('[data-q="marks"]')?.value)||0,
+        coNo: parseInt(row.querySelector('[data-q="coNo"]')?.value)||1,
+        rbt: row.querySelector('[data-q="rbt"]')?.value||'L3',
+      });
+    });
+
+    const rubrics = [];
+    document.querySelectorAll('.rubric-row[id]').forEach(row => {
+      rubrics.push({
+        criterion: row.querySelector('[data-r="criterion"]')?.value||'',
+        coNo: parseInt(row.querySelector('[data-r="coNo"]')?.value)||null,
+        exceptional: row.querySelector('[data-r="exceptional"]')?.value||'',
+        best: row.querySelector('[data-r="best"]')?.value||'',
+        average: row.querySelector('[data-r="average"]')?.value||'',
+      });
+    });
+
+    const coNosRaw = document.getElementById('aCoNos').value;
+    const coNos = coNosRaw.split(',').map(x=>parseInt(x.trim())).filter(Boolean);
+
+    const data = {
+      courseId: currentCourseId,
+      no: parseInt(document.getElementById('aNo').value)||1,
+      title,
+      description: document.getElementById('aDesc')?.value||'',
+      coNos,
+      rbtLevel: parseInt(document.getElementById('aRbt').value)||3,
+      maxMarks: parseFloat(document.getElementById('aMaxMarks').value)||10,
+      dueDate: document.getElementById('aDue').value||'',
+      questions,
+      rubrics,
+      aiGenerated: !!(aiResult && document.getElementById('aiTab')?.classList.contains('active')),
+    };
+
+    if (existingId) {
+      DB.assignments.update({...DB.assignments.byId(existingId), ...data});
+      Toast.success('Assignment updated!');
+    } else {
+      DB.assignments.add(data);
+      Toast.success('Assignment created!');
+    }
+    aiResult = null;
+    Modal.close();
+    renderAssignments();
+  }
+
+  // --- MOODLE INTEGRATION ---
+
+  function openMoodleModal() {
+    if (!currentCourseId) { Toast.warning('Select a course first.'); return; }
+    if (currentAssignments.length === 0) { Toast.warning('Create an assignment first.'); return; }
+
+    const options = currentAssignments.map(a => `<option value="${a.id}">${a.title}</option>`).join('');
+
+    Modal.open(`
+      <div class="modal-header">
+        <h3 class="modal-title">📥 Auto-Grade Moodle Export</h3>
+        <button class="modal-close" onclick="Modal.close()">✕</button>
+      </div>
+      <div class="alert alert-info" style="margin-bottom:var(--sp-md)">
+        <strong>How it works:</strong> Upload the '.zip' submissions file and the '.csv' grading worksheet downloaded from Moodle. The AI will read the submissions, grade them against the assignment rubrics, and generate an updated CSV for you to upload back to Moodle.
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">Select OBE Assignment</label>
+        <select class="form-control" id="moodleAssignSelect">
+          ${options}
+        </select>
+      </div>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">1. Submissions ZIP</label>
+          <input type="file" class="form-control" id="moodleZip" accept=".zip">
+        </div>
+        <div class="form-group">
+          <label class="form-label">2. Grading Worksheet CSV</label>
+          <input type="file" class="form-control" id="moodleCsv" accept=".csv">
+        </div>
+      </div>
+      
+      <div id="moodleProgress" style="margin-top:var(--sp-md); font-size:13px; color:var(--text-secondary); display:none;">
+        <div style="margin-bottom:4px;" id="moodleStatusText">Extracting files...</div>
+        <div class="progress-bar" style="height:8px;"><div class="progress-fill warning" id="moodleProgressBar" style="width:0%"></div></div>
+      </div>
+
+      <div class="modal-footer" style="margin-top:var(--sp-lg)">
+        <button class="btn btn-secondary" onclick="Modal.close()">Cancel</button>
+        <button class="btn btn-primary" id="moodleProcessBtn" onclick="processMoodleExport()">🤖 Auto-Grade & Download CSV</button>
+      </div>
+    `);
+  }
+
+  async function extractTextFromZipEntry(zipEntry) {
+    const name = zipEntry.name.toLowerCase();
+    try {
+      if (name.endsWith('.pdf')) {
+        const arrayBuffer = await zipEntry.async('arraybuffer');
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        let fullText = '';
+        for (let j = 1; j <= pdf.numPages; j++) {
+          const page = await pdf.getPage(j);
+          const textContent = await page.getTextContent();
+          fullText += textContent.items.map(s => s.str).join(' ') + '\\n';
+        }
+        return fullText || 'No text found in PDF.';
+      } 
+      else if (name.endsWith('.docx')) {
+        const arrayBuffer = await zipEntry.async('arraybuffer');
+        const result = await mammoth.extractRawText({ arrayBuffer: arrayBuffer });
+        return result.value || 'No text found in Word Doc.';
+      }
+      else if (name.endsWith('.txt') || name.endsWith('.js') || name.endsWith('.py') || name.endsWith('.html') || name.endsWith('.csv') || name.endsWith('.md')) {
+        return await zipEntry.async('string');
+      }
+    } catch(e) {
+      console.error('Error extracting file:', name, e);
+    }
+    return null; // Unsupported or error
+  }
+
+  async function processMoodleExport() {
+    const aId = document.getElementById('moodleAssignSelect').value;
+    const zipFile = document.getElementById('moodleZip').files[0];
+    const csvFile = document.getElementById('moodleCsv').files[0];
+    const btn = document.getElementById('moodleProcessBtn');
+    
+    if (!aId || !zipFile || !csvFile) {
+      Toast.warning('Please select an assignment and upload both files.');
+      return;
+    }
+
+    const assignment = DB.assignments.byId(aId);
+    if (!assignment.rubrics || assignment.rubrics.length === 0) {
+      Toast.error('Selected assignment has no rubrics! AI cannot grade it.');
+      return;
+    }
+
+    const progDiv = document.getElementById('moodleProgress');
+    const progText = document.getElementById('moodleStatusText');
+    const progBar = document.getElementById('moodleProgressBar');
+    
+    progDiv.style.display = 'block';
+    btnLoading(btn, true);
+
+    try {
+      // Step 1: Parse CSV
+      progText.textContent = 'Parsing grading worksheet...';
+      const csvText = await csvFile.text();
+      const parseResult = Papa.parse(csvText, { header: true, skipEmptyLines: true });
+      const rows = parseResult.data;
+
+      // Step 2: Load Zip
+      progText.textContent = 'Analyzing ZIP structure...';
+      const jszip = new JSZip();
+      const zip = await jszip.loadAsync(zipFile);
+      const zipFiles = Object.keys(zip.files);
+
+      // Mapping PRNs
+      const students = DB.students.byCourse(currentCourseId);
+      let gradedCount = 0;
+
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        
+        // Extract PRN from Moodle Email or Identifier (looks for 7+ digits)
+        const idStr = (row['Email address'] || '') + ' ' + (row['Identifier'] || '');
+        const prnMatch = idStr.match(/\\b(\\d{7,10})\\b/);
+        
+        if (!prnMatch) continue; // Skip if no PRN found
+        const prn = prnMatch[1];
+        
+        // Verify student exists in our OBE course
+        const student = students.find(s => s.prn === prn);
+        if (!student) continue;
+
+        const pName = student.name || prn;
+        progText.textContent = 'Grading ' + pName + ' (' + (i+1) + '/' + rows.length + ')...';
+        progBar.style.width = Math.round(((i+1)/rows.length)*100) + '%';
+
+        // Find the submission file in the zip
+        const moodleIdentifier = (row['Identifier'] || '').split(' ')[1] || row['Identifier']; 
+        // Example: Participant 123456
+        const targetFiles = zipFiles.filter(f => !zip.files[f].dir && (f.toLowerCase().includes(moodleIdentifier.toLowerCase() || 'missing') || f.toLowerCase().includes(student.name.toLowerCase().split(' ')[0])));
+        
+        let extractedText = '';
+        if (targetFiles.length > 0) {
+          // Read the first matched file
+          const entry = zip.files[targetFiles[0]];
+          const text = await extractTextFromZipEntry(entry);
+          if (text) {
+             extractedText = text;
+          } else {
+             extractedText = 'Unsupported file format submitted. Could not read contents.';
+          }
+        } else {
+          extractedText = 'No submission file found in the ZIP for this student.';
+        }
+
+        // Grade via AI
+        const gradeResult = await AI.gradeSubmission({
+          submissionText: extractedText,
+          rubrics: assignment.rubrics,
+          maxMarks: assignment.maxMarks
+        });
+
+        // Save to DB
+        const existingSub = DB.submissions.byAssignment(aId).find(s => s.prn === prn);
+        const subRecord = {
+          id: existingSub ? existingSub.id : Utils.generateId(),
+          assignmentId: aId,
+          prn: prn,
+          text: extractedText.substring(0, 5000), // store up to 5k chars for review
+          submittedAt: new Date().toISOString(),
+          marks: gradeResult.totalEarned,
+          gradedAt: new Date().toISOString(),
+          aiFeedback: gradeResult
+        };
+
+        if (existingSub) DB.submissions.update(subRecord);
+        else DB.submissions.add(subRecord);
+
+        // Update CSV Row for Moodle
+        row['Grade'] = gradeResult.totalEarned;
+        row['Maximum Grade'] = assignment.maxMarks;
+        row['Feedback comments'] = gradeResult.overallFeedback;
+        
+        gradedCount++;
+      }
+
+      // Step 3: Regenerate CSV & Download
+      progText.textContent = 'Generating updated CSV...';
+      progBar.style.width = '100%';
+      
+      const newCsv = Papa.unparse(rows);
+      const blob = new Blob([newCsv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'Moodle_Graded_' + assignment.title.replace(/\\s+/g, '_') + '.csv';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      Toast.success('Successfully auto-graded ' + gradedCount + ' submissions!');
+      setTimeout(() => {
+        Modal.close();
+        renderAssignments();
+      }, 1000);
+
+    } catch (e) {
+      console.error(e);
+      Toast.error('Grading failed: ' + e.message);
+    } finally {
+      btnLoading(btn, false);
+    }
+  }
+
+  document.getElementById('courseSelect').addEventListener('change', e => {
+    currentCourseId = e.target.value;
+    renderAssignments();
+  });
+
+  document.getElementById('createBtn').addEventListener('click', () => {
+    if (!currentCourseId) { Toast.warning('Select a course first.'); return; }
+    openCreateModal(null);
+  });
+
+  updateAIMeter();
+    loadCourses();
+})();
+</script>
+<script src="../scripts/ai-chat.js"></script>\n</body>
+</html>

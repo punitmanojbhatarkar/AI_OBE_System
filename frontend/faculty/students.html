@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Students | OBE System – MITAOE</title>
+  <meta name="description" content="Manage student roster, pre-survey scores and learner types.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800" rel="stylesheet">
+  <link rel="stylesheet" href="../styles/main.css?v=6">
+  <link rel="stylesheet" href="../styles/components.css?v=6">
+  <style>
+    .dist-bar-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      height: 28px;
+    }
+    .dist-bar-seg {
+      height: 100%;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: #fff;
+      transition: flex 0.4s ease;
+      white-space: nowrap;
+      overflow: hidden;
+      min-width: 0;
+    }
+    .dist-bar-seg.slow     { background: var(--danger); }
+    .dist-bar-seg.average  { background: var(--grad-warn); }
+    .dist-bar-seg.advanced { background: var(--success); }
+
+    .survey-score-bar {
+      width: 60px;
+      height: 6px;
+      background: var(--surface);
+      border-radius: 99px;
+      overflow: hidden;
+      display: inline-block;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+    .survey-score-fill {
+      height: 100%;
+      border-radius: 99px;
+      background: var(--primary);
+    }
+    .import-area {
+      width: 100%;
+      min-height: 120px;
+      background: var(--surface);
+      border: 1px dashed var(--border);
+      border-radius: var(--r-md);
+      padding: 12px;
+      color: var(--text-primary);
+      font-family: monospace;
+      font-size: 12px;
+      resize: vertical;
+      outline: none;
+    }
+    .import-area:focus { border-color: var(--primary); }
+    .learner-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      display: inline-block; margin-right: 4px;
+    }
+  </style>
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">OBE</div>
+      <div><div class="logo-text">OBE System</div><div class="logo-sub">MITAOE</div></div>
+    </div>
+    <nav class="sidebar-nav">
+      <p class="nav-section-label">Overview</p>
+      <a class="nav-item" href="dashboard.html">📊 Dashboard</a>
+      <a class="nav-item" href="courses.html">📚 My Courses</a>
+      <p class="nav-section-label">Course Management</p>
+      <a class="nav-item" href="syllabus.html">📖 Syllabus Setup</a>
+      <a class="nav-item" href="outcomes.html">🎯 CO & PO Setup</a>
+      <a class="nav-item" href="co-po-map.html">🗺️ CO-PO Mapping</a>
+      <a class="nav-item" href="6a-matrix.html">📋 6A Indicator Mapping</a>
+      <a class="nav-item" href="students.html">👥 Students</a>
+      <p class="nav-section-label">Assessment</p>
+      <a class="nav-item" href="marks.html">📝 Marks Entry</a>
+      <a class="nav-item" href="attainment.html">📈 Attainment</a>
+      <a class="nav-item" href="assignments.html">🤖 Assignments & AI</a>
+      <a class="nav-item" href="question-paper.html">📄 Question Paper</a>
+      <a class="nav-item" href="reports.html">📄 Reports & Export</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="user-avatar"></div>
+        <div><div class="user-name"></div><div class="user-role"></div></div>
+      </div>
+      <button class="btn btn-ghost btn-sm w-full" data-action="logout" style="margin-top:8px">
+        🚪 Logout
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main-content">
+    <header class="topbar">
+      <div class="topbar-left">
+        <h1 class="topbar-title">👥 Students</h1>
+        <div class="topbar-breadcrumb">
+          <span>Faculty</span><span>›</span><span>Students</span>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <select class="form-control" id="course-select" style="width:260px">
+          <option value="">— Select Course —</option>
+        </select>
+        <button class="btn btn-secondary btn-sm" onclick="openImportModal()">📥 Import Excel</button>
+        <button class="btn btn-primary btn-sm" onclick="openAddModal()">+ Add Student</button>
+      </div>
+    </header>
+
+    <div class="page-content">
+
+      <!-- Stat cards -->
+      <div class="grid-4 mb-lg" id="stats-row" style="display:none">
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(37,99,235,0.15);font-size:28px">👥</div>
+          <div class="stat-value" id="stat-total">0</div>
+          <div class="stat-label">Total Students</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(239,68,68,0.15);font-size:28px">🔴</div>
+          <div class="stat-value" id="stat-slow" style="color:var(--danger)">0</div>
+          <div class="stat-label">Slow Learners</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(245,158,11,0.15);font-size:28px">🟡</div>
+          <div class="stat-value" id="stat-avg" style="color:var(--warning)">0</div>
+          <div class="stat-label">Average Learners</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(16,185,129,0.15);font-size:28px">🟢</div>
+          <div class="stat-value" id="stat-adv" style="color:var(--success)">0</div>
+          <div class="stat-label">Advanced Learners</div>
+        </div>
+      </div>
+
+      <!-- Distribution bar + chart -->
+      <div class="card mb-lg" id="dist-card" style="display:none">
+        <div class="flex-between mb-md">
+          <div>
+            <div class="card-title">📊 Learner Distribution</div>
+            <div class="card-subtitle">Pre-survey score based classification</div>
+          </div>
+          <div style="font-size:12px;color:var(--text-muted)">
+            <span class="learner-dot" style="background:var(--danger)"></span>Slow (≤4) &nbsp;
+            <span class="learner-dot" style="background:var(--warning)"></span>Average (5–6) &nbsp;
+            <span class="learner-dot" style="background:var(--success)"></span>Advanced (≥7)
+          </div>
+        </div>
+        <div class="dist-bar-wrap" id="dist-bar" style="width:100%;border-radius:8px;overflow:hidden">
+          <div class="dist-bar-seg slow"     id="seg-slow"    style="flex:0"></div>
+          <div class="dist-bar-seg average"  id="seg-avg"     style="flex:0"></div>
+          <div class="dist-bar-seg advanced" id="seg-adv"     style="flex:0"></div>
+        </div>
+        <div style="display:flex;gap:32px;margin-top:12px;font-size:13px">
+          <span id="pct-slow"  style="color:var(--danger)"></span>
+          <span id="pct-avg"   style="color:var(--warning)"></span>
+          <span id="pct-adv"   style="color:var(--success)"></span>
+        </div>
+      </div>
+
+      <!-- Empty state -->
+      <div class="card" id="empty-state">
+        <div class="empty-state">
+          <div class="empty-icon">👥</div>
+          <h3>Select a Course</h3>
+          <p>Choose a course from the dropdown above to view and manage its student roster.</p>
+        </div>
+      </div>
+
+      <!-- Student table -->
+      <div class="card hidden" id="student-card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Student Roster</div>
+            <div class="card-subtitle" id="table-subtitle">Loading...</div>
+          </div>
+          <div class="flex gap-sm">
+            <div class="search-box" style="width:220px">
+              <span class="search-icon">🔍</span>
+              <input type="text" id="search-input" placeholder="Search name or PRN…">
+            </div>
+            <button class="btn btn-secondary btn-sm" onclick="exportStudents()">📤 Export CSV</button>
+          </div>
+        </div>
+        <div class="table-wrapper">
+          <table id="students-table">
+            <thead>
+              <tr>
+                <th style="width:50px">Sr.No</th>
+                <th>PRN</th>
+                <th>Student Name</th>
+                <th style="width:140px">Pre-Survey Score</th>
+                <th style="width:130px">Learner Type</th>
+                <th style="width:120px">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="students-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<div id="toast-container"></div>
+
+<!-- ── ADD/EDIT STUDENT MODAL (injected via JS) ── -->
+
+<script src="../scripts/data.js?v=2"></script>`r`n<script src="../scripts/api.js"></script>
+<script src="../scripts/auth.js?v=2"></script>
+<script src="../scripts/utils.js"></script>
+<script>
+  /* ── Auth ── */
+  const user = Auth.requireAuth(['faculty', 'hod']);
+  if (!user) throw new Error('Not authorized');
+  Auth.populateSidebar(user);
+
+  let currentCourseId = null;
+  let studentsCache   = [];
+  let editingStudent  = null;
+
+  /* ── Populate courses ── */
+  function populateCourses() {
+    const sel = document.getElementById('course-select');
+    const courses = DB.courses.byFaculty(user.id);
+    courses.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.id;
+      opt.textContent = `${c.code} – ${c.name}`;
+      sel.appendChild(opt);
+    });
+    const stored = sessionStorage.getItem('selected_course_id');
+    if (stored && courses.find(c => c.id === stored)) {
+      sel.value = stored;
+      loadStudents(stored);
+    } else if (courses.length > 0) {
+      sel.value = courses[0].id;
+      loadStudents(courses[0].id);
+    }
+  }
+
+  document.getElementById('course-select').addEventListener('change', e => {
+    if (e.target.value) {
+      sessionStorage.setItem('selected_course_id', e.target.value);
+      loadStudents(e.target.value);
+    }
+  });
+
+  /* ── Load students for course ── */
+  function loadStudents(courseId) {
+    currentCourseId = courseId;
+    studentsCache   = DB.students.byCourse(courseId);
+
+    document.getElementById('empty-state').classList.add('hidden');
+    document.getElementById('student-card').classList.remove('hidden');
+    document.getElementById('stats-row').style.display = '';
+    document.getElementById('dist-card').style.display = '';
+
+    renderStats();
+    renderDistribution();
+    renderTable();
+    filterTable('search-input', 'students-table');
+
+    const course = DB.courses.byId(courseId);
+    document.getElementById('table-subtitle').textContent =
+      course ? `${course.code} – ${course.name} | ${studentsCache.length} students` : '';
+  }
+
+  /* ── Render stat cards ── */
+  function renderStats() {
+    const slow = studentsCache.filter(s => s.learnerType === 'slow').length;
+    const avg  = studentsCache.filter(s => s.learnerType === 'average').length;
+    const adv  = studentsCache.filter(s => s.learnerType === 'advanced').length;
+    document.getElementById('stat-total').textContent = studentsCache.length;
+    document.getElementById('stat-slow').textContent  = slow;
+    document.getElementById('stat-avg').textContent   = avg;
+    document.getElementById('stat-adv').textContent   = adv;
+  }
+
+  /* ── Render distribution bar ── */
+  function renderDistribution() {
+    const total = studentsCache.length || 1;
+    const slow  = studentsCache.filter(s => s.learnerType === 'slow').length;
+    const avg   = studentsCache.filter(s => s.learnerType === 'average').length;
+    const adv   = studentsCache.filter(s => s.learnerType === 'advanced').length;
+
+    document.getElementById('seg-slow').style.flex   = slow;
+    document.getElementById('seg-avg').style.flex    = avg;
+    document.getElementById('seg-adv').style.flex    = adv;
+
+    document.getElementById('seg-slow').textContent  = slow > 0  ? `🔴 ${slow}`  : '';
+    document.getElementById('seg-avg').textContent   = avg  > 0  ? `🟡 ${avg}`   : '';
+    document.getElementById('seg-adv').textContent   = adv  > 0  ? `🟢 ${adv}`  : '';
+
+    const p = n => `${((n/total)*100).toFixed(1)}%`;
+    document.getElementById('pct-slow').textContent  = `🔴 Slow: ${slow} (${p(slow)})`;
+    document.getElementById('pct-avg').textContent   = `🟡 Average: ${avg} (${p(avg)})`;
+    document.getElementById('pct-adv').textContent   = `🟢 Advanced: ${adv} (${p(adv)})`;
+  }
+
+  /* ── Render student table ── */
+  function renderTable() {
+    const tbody = document.getElementById('students-tbody');
+    tbody.innerHTML = '';
+
+    if (studentsCache.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6" class="text-center" style="padding:32px;color:var(--text-muted)">
+        No students found. Add students or import from Excel.
+      </td></tr>`;
+      return;
+    }
+
+    studentsCache.forEach((s, i) => {
+      const score = s.preSurveyScore ?? 0;
+      const pct   = (score / 10) * 100;
+      const tr    = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="td-muted">${i + 1}</td>
+        <td><code style="font-size:12px;color:var(--primary)">${s.prn}</code></td>
+        <td>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div style="width:32px;height:32px;border-radius:50%;background:var(--primary);
+                        display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0">
+              ${Fmt.initials(s.name)}
+            </div>
+            <div>
+              <div style="font-weight:600;font-size:13px">${s.name}</div>
+            </div>
+          </div>
+        </td>
+        <td>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div class="survey-score-bar"><div class="survey-score-fill" style="width:${pct}%"></div></div>
+            <span style="font-weight:700;font-size:14px">${score}<span style="font-size:10px;color:var(--text-muted)">/10</span></span>
+          </div>
+        </td>
+        <td>${learnerBadge(s.learnerType)}</td>
+        <td>
+          <div class="flex gap-sm">
+            <button class="btn btn-secondary btn-sm" onclick="openEditModal('${s.id}')">✏️ Edit</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteStudent('${s.id}')">🗑</button>
+          </div>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  /* ── Determine learner type from score ── */
+  function classifyLearner(score) {
+    if (score <= 4) return 'slow';
+    if (score <= 6) return 'average';
+    return 'advanced';
+  }
+
+  /* ── ADD STUDENT MODAL ── */
+  function openAddModal() {
+    if (!currentCourseId) { Toast.warning('Please select a course first.'); return; }
+    editingStudent = null;
+    const html = `
+      <div class="modal-header">
+        <h3 class="modal-title">➕ Add Student</h3>
+        <button class="modal-close" onclick="Modal.close()">✕</button>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">PRN Number *</label>
+          <input class="form-control" id="f-prn" placeholder="e.g. 202201040001" maxlength="20">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Full Name *</label>
+          <input class="form-control" id="f-name" placeholder="Last First Middle">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Pre-Survey Score (0–10)</label>
+          <input class="form-control" id="f-score" type="number" min="0" max="10" placeholder="e.g. 7" oninput="updateLearnerPreview()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Learner Type</label>
+          <select class="form-control" id="f-learner">
+            <option value="slow">🔴 Slow</option>
+            <option value="average" selected>🟡 Average</option>
+            <option value="advanced">🟢 Advanced</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-hint" id="learner-preview"></div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="Modal.close()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveStudent()">Save Student</button>
+      </div>`;
+    Modal.open(html);
+    document.getElementById('f-score').addEventListener('input', updateLearnerPreview);
+  }
+
+  function openEditModal(id) {
+    const s = studentsCache.find(x => x.id === id);
+    if (!s) return;
+    editingStudent = s;
+    const html = `
+      <div class="modal-header">
+        <h3 class="modal-title">✏️ Edit Student</h3>
+        <button class="modal-close" onclick="Modal.close()">✕</button>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">PRN Number *</label>
+          <input class="form-control" id="f-prn" value="${s.prn}" maxlength="20">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Full Name *</label>
+          <input class="form-control" id="f-name" value="${s.name}">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Pre-Survey Score (0–10)</label>
+          <input class="form-control" id="f-score" type="number" min="0" max="10" value="${s.preSurveyScore ?? ''}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Learner Type</label>
+          <select class="form-control" id="f-learner">
+            <option value="slow"     ${s.learnerType==='slow'?'selected':''}>🔴 Slow</option>
+            <option value="average"  ${s.learnerType==='average'?'selected':''}>🟡 Average</option>
+            <option value="advanced" ${s.learnerType==='advanced'?'selected':''}>🟢 Advanced</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="Modal.close()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveStudent()">Update Student</button>
+      </div>`;
+    Modal.open(html);
+  }
+
+  function updateLearnerPreview() {
+    const score = parseInt(document.getElementById('f-score').value);
+    if (isNaN(score)) return;
+    const lt = classifyLearner(score);
+    const sel = document.getElementById('f-learner');
+    if (sel) sel.value = lt;
+    const prev = document.getElementById('learner-preview');
+    if (prev) prev.textContent = `Auto-classified as: ${lt.charAt(0).toUpperCase()+lt.slice(1)} Learner`;
+  }
+
+  function saveStudent() {
+    const prn   = (document.getElementById('f-prn').value||'').trim();
+    const name  = (document.getElementById('f-name').value||'').trim();
+    const score = parseInt(document.getElementById('f-score').value) || 0;
+    const lt    = document.getElementById('f-learner').value;
+
+    if (!prn || !name) { Toast.error('PRN and Name are required.'); return; }
+
+    // Check duplicate PRN
+    const existing = DB.students.byPRN(currentCourseId, prn);
+    if (existing && (!editingStudent || existing.id !== editingStudent.id)) {
+      Toast.error('A student with this PRN already exists in this course.');
+      return;
+    }
+
+    if (editingStudent) {
+      const updated = { ...editingStudent, prn, name, preSurveyScore: score, learnerType: lt };
+      DB.students.update(updated);
+      Toast.success('Student updated successfully!');
+    } else {
+      DB.students.add({ courseId: currentCourseId, prn, name, preSurveyScore: score, learnerType: lt });
+      Toast.success('Student added successfully!');
+    }
+
+    Modal.close();
+    studentsCache = DB.students.byCourse(currentCourseId);
+    renderStats();
+    renderDistribution();
+    renderTable();
+  }
+
+  /* ── DELETE ── */
+  function deleteStudent(id) {
+    const s = studentsCache.find(x => x.id === id);
+    if (!s) return;
+    confirmDelete(s.name, () => {
+      DB.students.delete(id);
+      studentsCache = DB.students.byCourse(currentCourseId);
+      renderStats();
+      renderDistribution();
+      renderTable();
+      Toast.success('Student deleted.');
+    });
+  }
+
+  /* ── IMPORT FROM EXCEL MODAL ── */
+  function openImportModal() {
+    if (!currentCourseId) { Toast.warning('Please select a course first.'); return; }
+    const html = `
+      <div class="modal-header">
+        <h3 class="modal-title">📥 Import Students from Excel</h3>
+        <button class="modal-close" onclick="Modal.close()">✕</button>
+      </div>
+      <div class="alert alert-info mb-md" style="font-size:13px">
+        ℹ️ Copy rows from Excel and paste below. Expected columns (tab-separated):<br>
+        <strong>PRN &nbsp;|&nbsp; Name &nbsp;|&nbsp; Pre-Survey Score &nbsp;|&nbsp; Learner Type</strong><br>
+        Learner Type: <code>slow</code> / <code>average</code> / <code>advanced</code> (optional, auto-classified from score)
+      </div>
+      <div class="form-group">
+        <label class="form-label">Paste Data</label>
+        <textarea class="import-area" id="import-data" placeholder="202201040001&#9;Rakshe Veer Tushar&#9;3&#9;slow
+202201040002&#9;Narote Sanket Satish&#9;8&#9;advanced"></textarea>
+      </div>
+      <div id="import-preview" class="mt-md" style="font-size:12px;color:var(--text-secondary)"></div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="Modal.close()">Cancel</button>
+        <button class="btn btn-secondary" onclick="previewImport()">👁 Preview</button>
+        <button class="btn btn-primary" onclick="doImport()">📥 Import</button>
+      </div>`;
+    Modal.open(html, { wide: true });
+    document.getElementById('import-data').addEventListener('paste', () => setTimeout(previewImport, 100));
+  }
+
+  function previewImport() {
+    const raw  = document.getElementById('import-data').value;
+    const rows = parsePaste(raw).filter(r => r.length >= 2 && r[0]);
+    const prev = document.getElementById('import-preview');
+    if (!prev) return;
+    prev.innerHTML = `<strong style="color:var(--text-primary)">${rows.length} rows detected</strong>. Preview:<br><br>`;
+    rows.slice(0,5).forEach(r => {
+      const prn   = r[0];
+      const name  = r[1] || '?';
+      const score = parseInt(r[2]) || 0;
+      const lt    = r[3] || classifyLearner(score);
+      prev.innerHTML += `<span style="color:var(--text-primary)">${prn}</span> – ${name} – Score:${score} – ${lt}<br>`;
+    });
+    if (rows.length > 5) prev.innerHTML += `…and ${rows.length-5} more rows`;
+  }
+
+  function doImport() {
+    const raw  = document.getElementById('import-data').value;
+    const rows = parsePaste(raw).filter(r => r.length >= 2 && r[0]);
+    if (rows.length === 0) { Toast.warning('No valid data to import.'); return; }
+
+    let added = 0, skipped = 0;
+    rows.forEach(r => {
+      const prn   = (r[0]||'').trim();
+      const name  = (r[1]||'').trim();
+      const score = parseInt(r[2]) || 0;
+      const lt    = r[3] ? r[3].trim().toLowerCase() : classifyLearner(score);
+      if (!prn || !name) { skipped++; return; }
+      if (DB.students.byPRN(currentCourseId, prn)) { skipped++; return; }
+      DB.students.add({ courseId: currentCourseId, prn, name, preSurveyScore: score, learnerType: lt });
+      added++;
+    });
+
+    Modal.close();
+    studentsCache = DB.students.byCourse(currentCourseId);
+    renderStats();
+    renderDistribution();
+    renderTable();
+    Toast.success(`Imported ${added} students. ${skipped > 0 ? skipped + ' skipped (duplicates/invalid).' : ''}`);
+  }
+
+  /* ── Export CSV ── */
+  function exportStudents() {
+    exportTableCSV('students-table', `students_${currentCourseId}.csv`);
+    Toast.info('Exported to CSV');
+  }
+
+  /* ── Init ── */
+  populateCourses();
+</script>
+<script src="../scripts/ai-chat.js"></script>\n</body>
+</html>

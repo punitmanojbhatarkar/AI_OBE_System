@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>OBE System – MITAOE</title>
+  <script>
+    // Root redirect based on session
+    try {
+      const session = JSON.parse(sessionStorage.getItem('obe_session'));
+      const HOME = { admin:'admin/dashboard.html', faculty:'faculty/dashboard.html', hod:'hod/dashboard.html', student:'student/dashboard.html' };
+      if (session && HOME[session.role]) window.location.href = HOME[session.role];
+      else window.location.href = 'login.html';
+    } catch(e) { window.location.href = 'login.html'; }
+  </script>
+</head>
+<body>Redirecting…<script src="../scripts/ai-chat.js"></script>\n</body>
+</html>

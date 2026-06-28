@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CO-PO Mapping | OBE System – MITAOE</title>
+  <meta name="description" content="Interactive CO-PO Mapping Matrix for course outcomes and program outcomes.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800" rel="stylesheet">
+  <link rel="stylesheet" href="../styles/main.css?v=6">
+  <link rel="stylesheet" href="../styles/components.css?v=6">
+  <style>
+    /* ── CO-PO Matrix Specific Styles ── */
+    .matrix-wrapper {
+      overflow-x: auto;
+      border-radius: var(--r-lg);
+      border: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .matrix-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      min-width: 900px;
+    }
+    .matrix-table th {
+      background: rgba(37,99,235,0.15);
+      padding: 10px 8px;
+      text-align: center;
+      font-weight: 700;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+      border-bottom: 1px solid var(--border);
+      border-right: 1px solid var(--border);
+      white-space: nowrap;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+    .matrix-table th.co-header {
+      text-align: left;
+      min-width: 140px;
+      position: sticky;
+      left: 0;
+      z-index: 3;
+      background: rgba(37,99,235,0.15);
+    }
+    .matrix-table td {
+      border-bottom: 1px solid var(--border);
+      border-right: 1px solid var(--border);
+      padding: 0;
+      text-align: center;
+    }
+    .matrix-table td.co-label {
+      padding: 10px 14px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 12px;
+      color: var(--text-primary);
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      position: sticky;
+      left: 0;
+      z-index: 1;
+      white-space: nowrap;
+      min-width: 140px;
+    }
+    .matrix-table td.co-label .co-num {
+      display: inline-block;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 28px;
+      text-align: center;
+      margin-right: 8px;
+      flex-shrink: 0;
+    }
+    .matrix-table tr.avg-row td {
+      background: rgba(37,99,235,0.15);
+      font-weight: 700;
+    }
+    .matrix-table tr.avg-row td.co-label {
+      background: rgba(37,99,235,0.08);
+      color: var(--primary);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      border-right: 1px solid var(--border);
+    }
+
+    /* ── Cell button ── */
+    .cell-btn {
+      width: 100%;
+      height: 46px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 700;
+      transition: all 0.15s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-primary);
+    }
+    .cell-btn:hover {
+      filter: brightness(1.3);
+      transform: scale(1.08);
+    }
+    .cell-btn[data-val="0"] { color: var(--text-muted); }
+    .cell-btn[data-val="1"] { background: rgba(245,158,11,0.12); color: #d97706; }
+    .cell-btn[data-val="2"] { background: rgba(249,115,22,0.12); color: #ea580c; }
+    .cell-btn[data-val="3"] { background: rgba(37,99,235,0.12); color: #2563eb; }
+
+    /* avg cell display */
+    .avg-cell {
+      padding: 10px 8px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .avg-cell.val-0 { color: var(--text-muted); }
+    .avg-cell.val-1 { color: #d97706; background: rgba(245,158,11,0.12); }
+    .avg-cell.val-2 { color: #ea580c; background: rgba(249,115,22,0.12); }
+    .avg-cell.val-3 { color: #2563eb; background: rgba(37,99,235,0.12); }
+
+    /* ── Legend ── */
+    .legend {
+      display: flex;
+      gap: var(--sp-lg);
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+    .legend-swatch {
+      width: 32px; height: 22px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    /* ── CO Description tooltip ── */
+    .co-text-small {
+      font-size: 10px;
+      color: var(--text-muted);
+      font-weight: 400;
+      margin-top: 2px;
+      max-width: 200px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* Section divider between PO and PSO cols */
+    .pso-divider { border-left: 2px solid var(--primary) !important; }
+
+    /* Summary cards */
+    .po-summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: 10px;
+    }
+    .po-sum-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      padding: 10px;
+      text-align: center;
+      transition: all var(--t-fast);
+    }
+    .po-sum-card:hover { border-color: rgba(37,99,235,0.15); }
+    .po-sum-card .po-name { font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
+    .po-sum-card .po-val { font-size: 18px; font-weight: 800; margin-top: 4px; }
+
+    .save-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--success);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .save-indicator.show { opacity: 1; }
+  </style>
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">OBE</div>
+      <div><div class="logo-text">OBE System</div><div class="logo-sub">MITAOE</div></div>
+    </div>
+    <nav class="sidebar-nav">
+      <p class="nav-section-label">Overview</p>
+      <a class="nav-item" href="dashboard.html">📊 Dashboard</a>
+      <a class="nav-item" href="courses.html">📚 My Courses</a>
+      <p class="nav-section-label">Course Management</p>
+      <a class="nav-item" href="syllabus.html">📖 Syllabus Setup</a>
+      <a class="nav-item" href="outcomes.html">🎯 CO & PO Setup</a>
+      <a class="nav-item" href="co-po-map.html">🗺️ CO-PO Mapping</a>
+      <a class="nav-item" href="6a-matrix.html">📋 6A Indicator Mapping</a>
+      <a class="nav-item" href="students.html">👥 Students</a>
+      <p class="nav-section-label">Assessment</p>
+      <a class="nav-item" href="marks.html">📝 Marks Entry</a>
+      <a class="nav-item" href="attainment.html">📈 Attainment</a>
+      <a class="nav-item" href="assignments.html">🤖 Assignments & AI</a>
+      <a class="nav-item" href="question-paper.html">📄 Question Paper</a>
+      <a class="nav-item" href="reports.html">📄 Reports & Export</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="user-avatar"></div>
+        <div><div class="user-name"></div><div class="user-role"></div></div>
+      </div>
+      <button class="btn btn-ghost btn-sm w-full" data-action="logout" style="margin-top:8px">
+        🚪 Logout
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main-content">
+    <header class="topbar">
+      <div class="topbar-left">
+        <h1 class="topbar-title">🗺️ CO-PO Mapping</h1>
+        <div class="topbar-breadcrumb">
+          <span>Faculty</span><span>›</span><span>CO-PO Mapping</span>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <span class="save-indicator" id="save-indicator">✓ Saved</span>
+        <select class="form-control" id="course-select" style="width:260px">
+          <option value="">— Select Course —</option>
+        </select>
+        <button class="btn btn-sm" style="background:var(--primary);color:white;border:none" onclick="autoMapWithAI()">✨ Auto-Map with AI</button>
+        <button class="btn btn-secondary btn-sm" onclick="resetMatrix()">↺ Reset</button>
+        <button class="btn btn-primary btn-sm" onclick="saveAll()">💾 Save All</button>
+      </div>
+    </header>
+
+    <div class="page-content">
+
+      <!-- Legend + Info -->
+      <div class="card mb-lg" id="info-card" style="display:none">
+        <div class="flex-between" style="flex-wrap:wrap;gap:16px">
+          <div>
+            <div class="card-title" id="course-title">Course Name</div>
+            <div class="card-subtitle" id="course-info">Course details</div>
+          </div>
+          <div class="legend">
+            <div class="legend-item">
+              <div class="legend-swatch" style="background:rgba(255,255,255,0.04);border:1px solid var(--border);color:var(--text-muted)">—</div>
+              <span>0 – Not Mapped</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-swatch" style="background:rgba(245,158,11,0.12);color:#d97706">1</div>
+              <span>1 – Low</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-swatch" style="background:rgba(249,115,22,0.12);color:#ea580c">2</div>
+              <span>2 – Medium</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-swatch" style="background:rgba(37,99,235,0.12);color:#2563eb">3</div>
+              <span>3 – High</span>
+            </div>
+            <div style="font-size:12px;color:var(--text-muted);border-left:1px solid var(--border);padding-left:16px">
+              💡 Click any cell to cycle: 0 → 1 → 2 → 3 → 0
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- No course selected empty state -->
+      <div class="card" id="empty-state">
+        <div class="empty-state">
+          <div class="empty-icon">🗺️</div>
+          <h3>Select a Course</h3>
+          <p>Choose a course from the dropdown above to view and edit the CO-PO mapping matrix.</p>
+        </div>
+      </div>
+
+      <!-- Matrix Section -->
+      <div id="matrix-section" class="hidden">
+        <div class="matrix-wrapper">
+          <table class="matrix-table" id="matrix-table">
+            <thead id="matrix-head"></thead>
+            <tbody id="matrix-body"></tbody>
+          </table>
+        </div>
+
+        <!-- PO Average Summary Cards -->
+        <div class="card mt-lg">
+          <div class="card-header">
+            <div>
+              <div class="card-title">📊 PO Mapping Summary</div>
+              <div class="card-subtitle">Average mapping strength per Program Outcome across all active COs</div>
+            </div>
+          </div>
+          <div class="po-summary-grid" id="po-summary"></div>
+        </div>
+
+        <!-- CO Description Reference -->
+        <div class="card mt-lg">
+          <div class="card-header">
+            <div class="card-title">📋 CO Reference</div>
+            <div class="card-subtitle">Course Outcome descriptions for this course</div>
+          </div>
+          <div class="table-wrapper">
+            <table id="co-ref-table">
+              <thead>
+                <tr>
+                  <th style="width:60px">CO</th>
+                  <th>Description</th>
+                  <th style="width:100px">Blooms Level</th>
+                  <th style="width:160px">Assessed Through</th>
+                </tr>
+              </thead>
+              <tbody id="co-ref-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /page-content -->
+  </main>
+</div>
+
+<div id="toast-container"></div>
+
+<script src="../scripts/data.js?v=2"></script>`r`n<script src="../scripts/api.js"></script>
+<script src="../scripts/auth.js?v=2"></script>
+<script src="../scripts/ai-mock.js?v=2"></script>
+<script src="../scripts/utils.js"></script>
+<script>
+  /* ── Auth ── */
+  const user = Auth.requireAuth(['faculty', 'hod']);
+  if (!user) throw new Error('Not authorized');
+  Auth.populateSidebar(user);
+
+  /* ── PO/PSO column definitions ── */
+  const PO_COLS = [
+    'PO1','PO2','PO3','PO4','PO5','PO6','PO7','PO8','PO9','PO10','PO11',
+    'PSO1','PSO2','PSO3'
+  ];
+
+  const PO_FULL = {
+    PO1:'Engineering Knowledge', PO2:'Problem Analysis', PO3:'Design/Development',
+    PO4:'Conduct Investigations', PO5:'Engineering Tool Usage', PO6:'The Engineer & World',
+    PO7:'Ethics', PO8:'Individual & Team Work', PO9:'Communication',
+    PO10:'Project Management', PO11:'Life-Long Learning',
+    PSO1:'Domain Specific 1', PSO2:'Domain Specific 2', PSO3:'Domain Specific 3'
+  };
+
+  let currentCourseId = null;
+  let activeCOs = [];
+
+  /* ── Populate course dropdown ── */
+  function populateCourses() {
+    const sel = document.getElementById('course-select');
+    const courses = DB.courses.byFaculty(user.id);
+    courses.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.id;
+      opt.textContent = `${c.code} – ${c.name}`;
+      sel.appendChild(opt);
+    });
+    // Restore from session
+    const stored = sessionStorage.getItem('selected_course_id');
+    if (stored && courses.find(c => c.id === stored)) {
+      sel.value = stored;
+      loadCourse(stored);
+    } else if (courses.length > 0) {
+      sel.value = courses[0].id;
+      loadCourse(courses[0].id);
+    }
+  }
+
+  document.getElementById('course-select').addEventListener('change', e => {
+    if (e.target.value) {
+      sessionStorage.setItem('selected_course_id', e.target.value);
+      loadCourse(e.target.value);
+    }
+  });
+
+  /* ── Load course matrix ── */
+  function loadCourse(courseId) {
+    currentCourseId = courseId;
+    const course = DB.courses.byId(courseId);
+    if (!course) return;
+
+    // Update info card
+    document.getElementById('info-card').style.display = '';
+    document.getElementById('empty-state').classList.add('hidden');
+    document.getElementById('matrix-section').classList.remove('hidden');
+    document.getElementById('course-title').textContent = `${course.code} – ${course.name}`;
+    document.getElementById('course-info').textContent =
+      `Sem ${course.semester} | ${course.class} | Div ${course.division} | ${DB.students.byCourse(course.id).length} Students`;
+
+    // Load COs (only ones with text)
+    const allCOs = DB.cos.byCourse(courseId);
+    activeCOs = allCOs.filter(co => co.text && co.text.trim() !== '');
+
+    buildMatrix();
+    buildCORef(allCOs);
+    buildSummaryCards();
+  }
+
+  /* ── Build the matrix table ── */
+  function buildMatrix() {
+    buildMatrixHead();
+    buildMatrixBody();
+  }
+
+  function buildMatrixHead() {
+    const head = document.getElementById('matrix-head');
+    // Row 1: PO group labels
+    let r1 = '<tr>';
+    r1 += '<th class="co-header" rowspan="2">Course Outcome</th>';
+    r1 += `<th colspan="12" style="text-align:center;background:rgba(37,99,235,0.15)">Program Outcomes (PO)</th>`;
+    r1 += `<th colspan="3" class="pso-divider" style="text-align:center;background:rgba(139,92,246,0.15)">PSO</th>`;
+    r1 += '</tr>';
+    // Row 2: individual PO names
+    let r2 = '<tr>';
+    PO_COLS.forEach((po, i) => {
+      const isPSO = po.startsWith('PSO');
+      const cls = isPSO && i === 12 ? 'pso-divider' : '';
+      r2 += `<th class="${cls}" title="${PO_FULL[po]}">${po}</th>`;
+    });
+    r2 += '</tr>';
+    head.innerHTML = r1 + r2;
+  }
+
+  function buildMatrixBody() {
+    const body = document.getElementById('matrix-body');
+    body.innerHTML = '';
+
+    activeCOs.forEach(co => {
+      const tr = document.createElement('tr');
+      // CO label cell
+      let labelHtml = `<td class="co-label">
+        <div style="display:flex;align-items:center;gap:0">
+          <span class="co-num">${co.no}</span>
+          <div>
+            <div>${co.code}</div>
+            <div class="co-text-small" title="${co.text}">${co.text}</div>
+          </div>
+        </div>
+      </td>`;
+      tr.innerHTML = labelHtml;
+
+      PO_COLS.forEach((po, i) => {
+        const val = DB.poMapping.getValue(currentCourseId, co.no, po);
+        const td = document.createElement('td');
+        if (i === 12) td.classList.add('pso-divider');
+        const btn = document.createElement('button');
+        btn.className = 'cell-btn';
+        btn.dataset.coNo = co.no;
+        btn.dataset.po = po;
+        btn.dataset.val = val;
+        btn.textContent = val === 0 ? '—' : val;
+        btn.title = `${co.code} × ${po}: ${val === 0 ? 'Not Mapped' : 'Level ' + val}`;
+        btn.addEventListener('click', () => cycleCell(btn));
+        td.appendChild(btn);
+        tr.appendChild(td);
+      });
+
+      body.appendChild(tr);
+    });
+
+    // Average row
+    buildAvgRow(body);
+  }
+
+  function buildAvgRow(body) {
+    const tr = document.createElement('tr');
+    tr.classList.add('avg-row');
+    tr.innerHTML = `<td class="co-label">
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--primary);font-weight:700">
+        ∑ Average
+      </div>
+      <div style="font-size:10px;color:var(--text-muted)">Across all COs</div>
+    </td>`;
+
+    PO_COLS.forEach((po, i) => {
+      const vals = activeCOs.map(co => DB.poMapping.getValue(currentCourseId, co.no, po)).filter(v => v > 0);
+      const avg = vals.length > 0 ? (vals.reduce((a,b) => a+b, 0) / vals.length) : 0;
+      const td = document.createElement('td');
+      if (i === 12) td.classList.add('pso-divider');
+      const dispVal = avg > 0 ? avg.toFixed(2) : '—';
+      const colorCls = avg >= 2.5 ? 'val-3' : avg >= 1.5 ? 'val-2' : avg > 0 ? 'val-1' : 'val-0';
+      td.innerHTML = `<div class="avg-cell ${colorCls}">${dispVal}</div>`;
+      td.dataset.po = po;
+      td.id = `avg-${po}`;
+      tr.appendChild(td);
+    });
+
+    body.appendChild(tr);
+  }
+
+  /* ── Cycle cell value on click ── */
+  function cycleCell(btn) {
+    const coNo = parseInt(btn.dataset.coNo);
+    const po   = btn.dataset.po;
+    let   val  = parseInt(btn.dataset.val);
+    val = (val + 1) % 4;
+
+    // Update button
+    btn.dataset.val = val;
+    btn.textContent = val === 0 ? '—' : val;
+    btn.title = `CO${coNo} × ${po}: ${val === 0 ? 'Not Mapped' : 'Level ' + val}`;
+
+    // Persist to DB
+    DB.poMapping.setValue(currentCourseId, coNo, po, val);
+
+    // Update average row
+    updateAvgCell(po);
+    updateSummaryCard(po);
+
+    // Flash save indicator
+    showSaved();
+  }
+
+  function updateAvgCell(po) {
+    const avgCell = document.getElementById(`avg-${po}`);
+    if (!avgCell) return;
+    const vals = activeCOs.map(co => DB.poMapping.getValue(currentCourseId, co.no, po)).filter(v => v > 0);
+    const avg = vals.length > 0 ? (vals.reduce((a,b) => a+b, 0) / vals.length) : 0;
+    const dispVal = avg > 0 ? avg.toFixed(2) : '—';
+    const colorCls = avg >= 2.5 ? 'val-3' : avg >= 1.5 ? 'val-2' : avg > 0 ? 'val-1' : 'val-0';
+    avgCell.querySelector('.avg-cell').className = `avg-cell ${colorCls}`;
+    avgCell.querySelector('.avg-cell').textContent = dispVal;
+  }
+
+  function updateSummaryCard(po) {
+    const card = document.getElementById(`sum-${po}`);
+    if (!card) return;
+    const vals = activeCOs.map(co => DB.poMapping.getValue(currentCourseId, co.no, po)).filter(v => v > 0);
+    const avg = vals.length > 0 ? (vals.reduce((a,b) => a+b, 0) / vals.length) : 0;
+    const valEl = card.querySelector('.po-val');
+    valEl.textContent = avg > 0 ? avg.toFixed(2) : '—';
+    valEl.style.color = avg >= 2.5 ? 'var(--success)' : avg >= 1.5 ? 'var(--warning)' : avg > 0 ? '#f97316' : 'var(--text-muted)';
+  }
+
+  /* ── Build CO Reference table ── */
+  function buildCORef(allCOs) {
+    const body = document.getElementById('co-ref-body');
+    body.innerHTML = '';
+    allCOs.forEach(co => {
+      const tr = document.createElement('tr');
+      const bloomMap = {L1:'Remember',L2:'Understand',L3:'Apply',L4:'Analyze',L5:'Evaluate',L6:'Create'};
+      const assessed = (co.assessedThrough||[]).map(a => a.toUpperCase()).join(', ');
+      tr.innerHTML = `
+        <td><span class="badge badge-primary">${co.code}</span></td>
+        <td style="font-size:13px">${co.text || '<span class="text-muted">—</span>'}</td>
+        <td><span class="badge badge-info">${co.bloomsLevel} – ${bloomMap[co.bloomsLevel]||''}</span></td>
+        <td><span style="font-size:12px;color:var(--text-secondary)">${assessed || '—'}</span></td>
+      `;
+      body.appendChild(tr);
+    });
+  }
+
+  /* ── Build summary cards ── */
+  function buildSummaryCards() {
+    const grid = document.getElementById('po-summary');
+    grid.innerHTML = '';
+    PO_COLS.forEach(po => {
+      const vals = activeCOs.map(co => DB.poMapping.getValue(currentCourseId, co.no, po)).filter(v => v > 0);
+      const avg = vals.length > 0 ? (vals.reduce((a,b) => a+b, 0) / vals.length) : 0;
+      const color = avg >= 2.5 ? 'var(--success)' : avg >= 1.5 ? 'var(--warning)' : avg > 0 ? '#f97316' : 'var(--text-muted)';
+      const card = document.createElement('div');
+      card.className = 'po-sum-card';
+      card.id = `sum-${po}`;
+      card.title = PO_FULL[po] || po;
+      card.innerHTML = `
+        <div class="po-name">${po}</div>
+        <div class="po-val" style="color:${color}">${avg > 0 ? avg.toFixed(2) : '—'}</div>
+        <div style="font-size:9px;color:var(--text-muted);margin-top:2px">${PO_FULL[po]||''}</div>
+      `;
+      grid.appendChild(card);
+    });
+  }
+
+  /* ── Save All ── */
+  function saveAll() {
+    if (!currentCourseId) { Toast.warning('Please select a course first.'); return; }
+    // All cells auto-save on click, but let's force a sync confirmation
+    Toast.success('CO-PO Mapping saved successfully!');
+    showSaved();
+  }
+
+  /* ── Reset Matrix ── */
+  function resetMatrix() {
+    if (!currentCourseId) return;
+    Modal.confirm(
+      'Reset CO-PO Matrix',
+      'This will clear ALL mapping values for this course. This action cannot be undone.',
+      () => {
+        activeCOs.forEach(co => {
+          PO_COLS.forEach(po => {
+            DB.poMapping.setValue(currentCourseId, co.no, po, 0);
+          });
+        });
+        buildMatrix();
+        buildSummaryCards();
+        Toast.info('Matrix has been reset.');
+      },
+      'Reset', true
+    );
+  }
+
+  /* ── Auto-Map with AI ── */
+  async function autoMapWithAI() {
+    if (!currentCourseId) return Toast.warning('Select a course first.');
+    if (activeCOs.length === 0) return Toast.warning('No active Course Outcomes. Setup COs first.');
+    
+    const btn = document.querySelector('button[onclick="autoMapWithAI()"]');
+    const ogText = btn.innerHTML;
+    btn.innerHTML = '⏳ Mapping...';
+    btn.disabled = true;
+
+    try {
+      const mappings = await AI.autoMapCOPO(activeCOs, PO_COLS);
+      // Apply mappings
+      activeCOs.forEach(co => {
+        PO_COLS.forEach(po => {
+          const val = mappings[co.no]?.[po] || 0;
+          DB.poMapping.setValue(currentCourseId, co.no, po, val);
+        });
+      });
+      // Refresh UI
+      buildMatrix();
+      buildSummaryCards();
+      Toast.success('AI successfully mapped COs to POs!');
+      showSaved();
+    } catch(e) {
+      Toast.error(e.message || 'Auto-mapping failed.');
+    } finally {
+      btn.innerHTML = ogText;
+      btn.disabled = false;
+    }
+  }
+
+  /* ── Show saved indicator ── */
+  let saveTimer = null;
+  function showSaved() {
+    const el = document.getElementById('save-indicator');
+    el.classList.add('show');
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => el.classList.remove('show'), 2000);
+  }
+
+  /* ── Init ── */
+  populateCourses();
+</script>
+<script src="../scripts/ai-chat.js"></script>\n</body>
+</html>

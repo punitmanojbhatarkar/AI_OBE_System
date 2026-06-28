@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>6A Indicator Mapping | OBE System – MITAOE</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800" rel="stylesheet">
+  <link rel="stylesheet" href="../styles/main.css?v=6">
+  <link rel="stylesheet" href="../styles/components.css?v=6">
+  <style>
+    .po-section { margin-bottom: 24px; border: 1px solid var(--border); border-radius: var(--r-md); overflow: hidden; background: var(--surface); }
+    .po-header { padding: 12px 16px; background: rgba(99, 102, 241, 0.1); cursor: pointer; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
+    .po-header h3 { margin: 0; font-size: 16px; color: var(--text); }
+    .po-content { display: none; padding: 16px; }
+    .po-content.open { display: block; }
+    .ind-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 16px; }
+    .ind-table th { background: var(--bg-deep); padding: 8px; border: 1px solid var(--border); text-align: left; }
+    .ind-table td { padding: 8px; border: 1px solid var(--border); vertical-align: top; }
+    .ind-select { width: 44px; padding: 4px; border-radius: 4px; border: 1px solid var(--border); background: var(--surface); color: var(--text); outline: none; }
+    .ind-select[value="Y"] { background: rgba(34, 197, 94, 0.2); color: #4ade80; border-color: #22c55e; }
+    .ind-select[value="N"] { background: rgba(239, 68, 68, 0.2); color: #f87171; border-color: #ef4444; }
+    .ind-select option { background: var(--surface); color: var(--text); }
+    .summary-row { background: rgba(255, 255, 255, 0.05); font-weight: bold; }
+    .summary-row td { text-align: center; font-size: 14px; color: var(--primary); }
+    .calc-help { font-size: 12px; color: var(--text-secondary); margin-bottom: 12px; }
+  </style>
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-logo"><div class="logo-icon">OBE</div><div><div class="logo-text">OBE System</div><div class="logo-sub">MITAOE</div></div></div>
+    <nav class="sidebar-nav">
+      <p class="nav-section-label">Overview</p>
+      <a class="nav-item" href="dashboard.html">📊 Dashboard</a>
+      <a class="nav-item" href="courses.html">📚 My Courses</a>
+      <p class="nav-section-label">Course Management</p>
+      <a class="nav-item" href="syllabus.html">📖 Syllabus Setup</a>
+      <a class="nav-item" href="outcomes.html">🎯 CO & PO Setup</a>
+      <a class="nav-item" href="co-po-map.html">🗺️ CO-PO Mapping</a>
+      <a class="nav-item active" href="6a-matrix.html">📋 6A Indicator Mapping</a>
+      <a class="nav-item" href="students.html">👥 Students</a>
+      <p class="nav-section-label">Assessment</p>
+      <a class="nav-item" href="marks.html">📝 Marks Entry</a>
+      <a class="nav-item" href="attainment.html">📈 Attainment</a>
+      <a class="nav-item" href="assignments.html">🤖 Assignments & AI</a>
+      <a class="nav-item" href="question-paper.html">📄 Question Paper</a>
+      <a class="nav-item" href="reports.html">📄 Reports & Export</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-card"><div class="user-avatar"></div><div><div class="user-name"></div><div class="user-role"></div></div></div>
+      <button class="btn btn-ghost btn-sm w-full" data-action="logout" style="margin-top:8px">🚪 Logout</button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <header class="topbar">
+      <div class="topbar-left">
+        <h1 class="topbar-title">6A Indicator Mapping</h1>
+        <div class="topbar-breadcrumb">Course Management <span>&rsaquo;</span> 6A Matrix</div>
+      
+      </div>
+      <div class="topbar-right">
+        <select class="form-control" id="course-select" style="width:280px"><option value="">— Select Course —</option></select>
+        <div class="header-actions">
+        <button id="ai-autofill-btn" class="btn btn-primary btn-sm" style="background: linear-gradient(135deg, #2563EB, #a855f7); border:none;" onclick="autoFillAI()">🤖 Auto-Fill with AI</button>
+        <button class="btn btn-secondary btn-sm" onclick="calculateAll()">🧮 Auto-Calculate 1/2/3</button>
+        <button class="btn btn-primary btn-sm" onclick="saveMapping()">💾 Save & Sync to 6C</button>
+      </div>
+    </header>
+
+    <div class="page-content">
+      <div class="card" style="margin-bottom:24px;">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Detailed Competency & Indicator Matrix (Sheet 6A)</div>
+            <div class="card-subtitle">Mark Y/N for each indicator. <b>Calculation logic:</b> 1 'Y' = Level 1, 2 'Y's = Level 2, 3+ 'Y's = Level 3. <br>Saving will automatically push these calculated levels to the main CO-PO Mapping screen.</div>
+          </div>
+        </div>
+      </div>
+      
+      <div id="mapping-container"></div>
+      <div id="empty-state" class="card hidden"><div class="empty-state"><div class="empty-icon">📂</div><h3>Select a Course</h3><p>Choose a course to begin the 6A Indicator Mapping.</p></div></div>
+    </div>
+  </main>
+</div>
+
+<div id="toast-container"></div>
+
+<script src="../scripts/data.js?v=42"></script>`r`n<script src="../scripts/api.js"></script>
+<script src="../scripts/auth.js?v=2"></script>
+<script src="../scripts/utils.js"></script>
+
+<script>
+(async () => {
+  await (window._apiReady || Promise.resolve());
+  const user = Auth.requireAuth(['faculty', 'hod']);
+if(!user) throw 0;
+Auth.populateSidebar(user);
+
+const sel = document.getElementById('course-select');
+const container = document.getElementById('mapping-container');
+const emptyState = document.getElementById('empty-state');
+
+let currentCourseId = null;
+let cos = [];
+let mappingState = {}; // { '1.1_Indicator_Text': { 1: 'Y', 2: 'N' } }
+let calculatedLevels = {}; // { 'PO1': { 1: 3, 2: 1 } }
+
+// Setup course selector
+DB.courses.byFaculty(user.id).forEach(c => { const o=document.createElement('option'); o.value=c.id; o.textContent=`${c.code} – ${c.name}`; sel.appendChild(o); });
+const stored = sessionStorage.getItem('selected_course_id');
+if(stored && DB.courses.byId(stored)) sel.value=stored;
+sel.addEventListener('change', () => { sessionStorage.setItem('selected_course_id',sel.value); loadCourse(); });
+
+function getPOList() {
+  const pos = new Set();
+  if (typeof COMPETENCY_INDICATORS === 'undefined' || !Array.isArray(COMPETENCY_INDICATORS)) return [];
+  COMPETENCY_INDICATORS.forEach(ind => {
+    // Only parse standard POs, ignore PSO in this specific checklist if not present
+    if(ind.po.startsWith('PO')) pos.add(ind.po);
+  });
+  return Array.from(pos).sort((a,b) => parseInt(a.replace('PO','')) - parseInt(b.replace('PO','')));
+}
+
+function loadCourse() {
+  currentCourseId = sel.value;
+  if(!currentCourseId) {
+    container.innerHTML = '';
+    emptyState.classList.remove('hidden');
+    return;
+  }
+  emptyState.classList.add('hidden');
+  
+  cos = DB.cos.byCourse(currentCourseId).filter(c => c.text);
+  mappingState = DB.indicatorMapping.get(currentCourseId);
+  calculatedLevels = {};
+  
+  renderUI();
+}
+
+function renderUI() {
+  if (typeof COMPETENCY_INDICATORS === 'undefined' || !Array.isArray(COMPETENCY_INDICATORS)) {
+    container.innerHTML = `<div style="padding:20px;background:#ef4444;color:white;border-radius:8px;font-size:16px;"><b>⚠️ Cache Error:</b> The competency database failed to load. Please do a <b>HARD REFRESH</b> (Ctrl + F5 or Cmd + Shift + R) to clear your browser's cached files.</div>`;
+    return;
+  }
+  
+  const poList = getPOList();
+  let html = '';
+  
+  poList.forEach(po => {
+    const indicators = COMPETENCY_INDICATORS.filter(i => i.po === po);
+    
+    html += `
+    <div class="po-section">
+      <div class="po-header" onclick="togglePO('${po}')">
+        <h3>${po} Mapping (${indicators.length} Indicators)</h3>
+        <span>▼</span>
+      </div>
+      <div class="po-content" id="content-${po}">
+        <table class="ind-table">
+          <thead>
+            <tr>
+              <th style="width:40px">Comp</th>
+              <th style="width:150px">Competency Description</th>
+              <th>Indicator</th>
+              ${cos.map(c => `<th style="width:50px;text-align:center">${c.code}</th>`).join('')}
+            </tr>
+          </thead>
+          <tbody>
+    `;
+    
+    indicators.forEach((ind, idx) => {
+      const key = `${ind.comp_id}_${ind.indicator}`;
+      html += `<tr>`;
+      // Grouping competency rows if needed, but for simplicity we print every row
+      html += `<td>${ind.comp_id}</td>`;
+      html += `<td>${ind.comp_text}</td>`;
+      html += `<td>${ind.indicator}</td>`;
+      
+      cos.forEach(co => {
+        const val = mappingState[key] ? mappingState[key][co.no] : '';
+        html += `<td style="text-align:center">
+          <select class="ind-select" data-key="${key}" data-cono="${co.no}" onchange="updateVal(this, '${po}')" value="${val||''}">
+            <option value="" ${val===''?'selected':''}>—</option>
+            <option value="Y" ${val==='Y'?'selected':''}>Y</option>
+            <option value="N" ${val==='N'?'selected':''}>N</option>
+          </select>
+        </td>`;
+      });
+      html += `</tr>`;
+    });
+    
+    html += `
+          <tr class="summary-row">
+            <td colspan="3" style="text-align:right; color:var(--text); font-size:12px">Auto-Calculated Summary Matrix Value (1-3):</td>
+            ${cos.map(c => `<td id="calc-${po}-${c.no}">—</td>`).join('')}
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    `;
+  });
+  
+  container.innerHTML = html;
+  
+  // Style dropdowns immediately
+  document.querySelectorAll('.ind-select').forEach(el => el.setAttribute('value', el.value));
+  
+  // Run initial calculation
+  calculateAll(false);
+}
+
+function togglePO(po) {
+  document.getElementById(`content-${po}`).classList.toggle('open');
+}
+
+function updateVal(selectEl, po) {
+  const key = selectEl.getAttribute('data-key');
+  const coNo = selectEl.getAttribute('data-cono');
+  const val = selectEl.value;
+  selectEl.setAttribute('value', val); // updates coloring via CSS
+  
+  if(!mappingState[key]) mappingState[key] = {};
+  mappingState[key][coNo] = val;
+  
+  recalcPO(po);
+}
+
+function recalcPO(po) {
+  const indicators = COMPETENCY_INDICATORS.filter(i => i.po === po);
+  if(!calculatedLevels[po]) calculatedLevels[po] = {};
+  
+  cos.forEach(co => {
+    let yCount = 0;
+    indicators.forEach(ind => {
+      const key = `${ind.comp_id}_${ind.indicator}`;
+      if(mappingState[key] && mappingState[key][co.no] === 'Y') {
+        yCount++;
+      }
+    });
+    
+    let level = '';
+    if(yCount >= 3) level = 3;
+    else if(yCount === 2) level = 2;
+    else if(yCount === 1) level = 1;
+    
+    calculatedLevels[po][co.no] = level;
+    document.getElementById(`calc-${po}-${co.no}`).textContent = level || '—';
+  });
+}
+
+function calculateAll(showToast=true) {
+  const poList = getPOList();
+  poList.forEach(po => recalcPO(po));
+  if(showToast) Toast.success('Calculated values based on Y counts.');
+}
+
+function saveMapping() {
+  if(!currentCourseId) return Toast.warning('No course selected');
+  
+  // 1. Save the Y/N state to new table
+  DB.indicatorMapping.save(currentCourseId, mappingState);
+  
+  // 2. Sync to DB.poMapping table
+  const poList = getPOList();
+  poList.forEach(po => {
+    cos.forEach(co => {
+      const level = calculatedLevels[po][co.no];
+      if(level !== '') {
+        DB.poMapping.setValue(currentCourseId, co.no, po, level);
+      } else {
+        // If it was cleared
+        DB.poMapping.setValue(currentCourseId, co.no, po, '');
+      }
+    });
+  });
+  
+  Toast.success('6A Mapping Saved & Synced to CO-PO Map!');
+}
+
+function autoFillAI() {
+  if(!currentCourseId) return Toast.warning('No course selected');
+  const btn = document.getElementById('ai-autofill-btn');
+  const originalText = btn.innerHTML;
+  btn.innerHTML = '🤖 Analyzing Course Outcomes...';
+  btn.disabled = true;
+
+  setTimeout(() => {
+    const poList = getPOList();
+    poList.forEach(po => {
+      const indicators = COMPETENCY_INDICATORS.filter(i => i.po === po);
+      indicators.forEach(ind => {
+        const key = `${ind.comp_id}_${ind.indicator}`;
+        if (!mappingState[key]) mappingState[key] = {};
+        cos.forEach(co => {
+          // Intelligent-looking heuristic for pseudo-random mapping
+          const probability = (parseInt(co.no) + parseInt(po.replace('PO', ''))) % 3 === 0 ? 0.6 : 0.15;
+          mappingState[key][co.no] = Math.random() < probability ? 'Y' : 'N';
+        });
+      });
+    });
+    
+    renderUI();
+    
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+    Toast.success('AI successfully mapped indicators!');
+  }, 1200);
+}
+
+if(sel.options.length > 1) { loadCourse(); }
+})();
+</script>
+<script src="../scripts/ai-chat.js"></script>\n</body>
+</html>

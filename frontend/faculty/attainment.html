@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CO & PO Attainment | OBE System – MITAOE</title>
+  <meta name="description" content="CO and PO attainment analysis and reporting for faculty">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800" rel="stylesheet">
+  <link rel="stylesheet" href="../styles/main.css?v=6"
+  <link rel="stylesheet" href="../styles/components.css?v=6"">
+  <style>
+    .att-table td { font-size: 13px; }
+    .att-table th { font-size: 11px; }
+    .pct-cell { font-weight: 700; color: var(--text-primary); }
+    .section-card { margin-bottom: var(--sp-xl); }
+    .po-bar-wrapper { display:flex; align-items:center; gap: var(--sp-md); }
+    .po-label { width: 44px; font-weight: 700; font-size: 12px; flex-shrink:0; }
+    .po-bar { flex:1; height: 10px; background: var(--surface); border-radius: var(--r-full); overflow:hidden; }
+    .po-bar-fill { height:100%; border-radius: var(--r-full); background: var(--primary); transition: width 0.6s ease; }
+    .po-val { width: 36px; font-size: 11px; color: var(--text-secondary); text-align: right; flex-shrink:0; }
+    .summary-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px,1fr)); gap: var(--sp-md); }
+    .summary-item { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-md); padding: var(--sp-md); text-align: center; }
+    .summary-item .s-label { font-size: 11px; color: var(--text-secondary); margin-bottom: 4px; }
+    .summary-item .s-val { font-size: 22px; font-weight: 800; }
+    .chart-wrap { position: relative; height: 260px; }
+  </style>
+</head>
+<body>
+<div class="app-shell">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">OBE</div>
+      <div><div class="logo-text">OBE System</div><div class="logo-sub">MITAOE</div></div>
+    </div>
+    <nav class="sidebar-nav">
+      <p class="nav-section-label">Overview</p>
+      <a class="nav-item" href="dashboard.html">📊 Dashboard</a>
+      <a class="nav-item" href="courses.html">📚 My Courses</a>
+      <p class="nav-section-label">Course Management</p>
+      <a class="nav-item" href="syllabus.html">📖 Syllabus Setup</a>
+      <a class="nav-item" href="outcomes.html">🎯 CO & PO Setup</a>
+      <a class="nav-item" href="co-po-map.html">🗺️ CO-PO Mapping</a>
+      <a class="nav-item" href="6a-matrix.html">📋 6A Indicator Mapping</a>
+      <a class="nav-item" href="students.html">👥 Students</a>
+      <p class="nav-section-label">Assessment</p>
+      <a class="nav-item" href="marks.html">📝 Marks Entry</a>
+      <a class="nav-item active" href="attainment.html">📈 Attainment</a>
+      <a class="nav-item" href="assignments.html">🤖 Assignments & AI</a>
+      <a class="nav-item" href="question-paper.html">📄 Question Paper</a>
+      <a class="nav-item" href="reports.html">📄 Reports & Export</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="user-avatar"></div>
+        <div><div class="user-name"></div><div class="user-role"></div></div>
+      </div>
+      <button class="btn btn-ghost btn-sm w-full" data-action="logout" style="margin-top:8px">🚪 Logout</button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main-content">
+    <header class="topbar">
+      <div class="topbar-left">
+        <h1 class="topbar-title">📈 CO & PO Attainment</h1>
+        <div class="topbar-breadcrumb">Assessment <span>›</span> Attainment</div>
+      </div>
+      <div class="topbar-right">
+        <select id="courseSelect" class="form-control" style="width:220px">
+          <option value="">Select Course…</option>
+        </select>
+        <button class="btn btn-primary" id="calcBtn">⚡ Calculate Attainment</button>
+      </div>
+    </header>
+
+    <div class="page-content">
+      <!-- Course Info Banner -->
+      <div id="courseBanner" class="card hidden" style="margin-bottom:var(--sp-lg); background: linear-gradient(135deg, #1D4ED8 0%, #2563EB 50%, #3B82F6 100%); color: #fff;">
+        <div class="flex-between">
+          <div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.7);font-weight:700;text-transform:uppercase;letter-spacing:.05em">Selected Course</div>
+            <div id="bannerName" style="font-size:20px;font-weight:800;margin-top:2px; color:#fff;"></div>
+            <div id="bannerMeta" style="font-size:13px;color:rgba(255,255,255,0.75);margin-top:2px"></div>
+          </div>
+          <div class="flex gap-md" id="bannerWeights"></div>
+        </div>
+      </div>
+
+      <!-- Empty state -->
+      <div id="emptyState" class="empty-state">
+        <div class="empty-icon">📈</div>
+        <h3>Select a Course to View Attainment</h3>
+        <p>Choose a course from the dropdown and click "Calculate Attainment" to view CO and PO attainment analysis.</p>
+      </div>
+
+      <!-- Results (hidden until calculated) -->
+      <div id="results" class="hidden">
+
+        <!-- SECTION 1: DIRECT ATTAINMENT -->
+        <div class="section-card">
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">📊 Section 1: Direct Attainment</div>
+                <div class="card-subtitle">IA, MSE, CIE and ESE based CO attainment (Sheet 14A)</div>
+              </div>
+              <span class="badge badge-info">Direct Assessment</span>
+            </div>
+            <div class="table-wrapper">
+              <table class="att-table" id="directTable">
+                <thead>
+                  <tr>
+                    <th>CO</th>
+                    <th>Description</th>
+                    <th>Blooms</th>
+                    <th>Target %</th>
+                    <th>IA %</th>
+                    <th>MSE %</th>
+                    <th>CIE %</th>
+                    <th>CIE Level</th>
+                    <th>ESE %</th>
+                    <th>ESE Level</th>
+                    <th>Direct Level</th>
+                  </tr>
+                </thead>
+                <tbody id="directBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 2: INDIRECT ATTAINMENT -->
+        <div class="section-card">
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">📋 Section 2: Indirect Attainment</div>
+                <div class="card-subtitle">Exit survey based CO attainment (5-point scale)</div>
+              </div>
+              <span class="badge badge-primary">Indirect Assessment</span>
+            </div>
+            <div class="table-wrapper">
+              <table class="att-table" id="indirectTable">
+                <thead>
+                  <tr>
+                    <th>CO</th>
+                    <th>Description</th>
+                    <th>Blooms Level</th>
+                    <th>Target %</th>
+                    <th>Survey Avg %</th>
+                    <th>Indirect Level</th>
+                  </tr>
+                </thead>
+                <tbody id="indirectBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 3: FINAL CO ATTAINMENT -->
+        <div class="section-card">
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">🎯 Section 3: Final CO Attainment</div>
+                <div class="card-subtitle">Weighted combination of Direct (80%) + Indirect (20%)</div>
+              </div>
+              <span class="badge badge-success">Final Result</span>
+            </div>
+            <div class="table-wrapper">
+              <table class="att-table" id="finalTable">
+                <thead>
+                  <tr>
+                    <th>CO</th>
+                    <th>Description</th>
+                    <th>Direct Level</th>
+                    <th>Indirect Level</th>
+                    <th>Final Level (Weighted)</th>
+                    <th>Attained?</th>
+                  </tr>
+                </thead>
+                <tbody id="finalBody"></tbody>
+              </table>
+            </div>
+            <!-- Summary mini bar -->
+            <div class="summary-grid mt-lg" id="finalSummary"></div>
+          </div>
+        </div>
+
+        <!-- SECTION 4: PO ATTAINMENT -->
+        <div class="section-card">
+          <div class="grid-2">
+            <!-- PO Table -->
+            <div class="card">
+              <div class="card-header">
+                <div>
+                  <div class="card-title">🌐 Section 4: PO Attainment</div>
+                  <div class="card-subtitle">Program Outcome attainment (PO1–PO11, PSO1–PSO3)</div>
+                </div>
+              </div>
+              <div class="table-wrapper">
+                <table class="att-table" id="poTable">
+                  <thead>
+                    <tr>
+                      <th>PO / PSO</th>
+                      <th>Weighted Score</th>
+                      <th>Level</th>
+                    </tr>
+                  </thead>
+                  <tbody id="poBody"></tbody>
+                </table>
+              </div>
+            </div>
+            <!-- PO Chart -->
+            <div class="card">
+              <div class="flex-between" style="margin-bottom:var(--sp-md)">
+                <div class="card-title" style="margin-bottom:0">PO Attainment Overview</div>
+                <div style="display:flex;gap:4px">
+                  <button class="btn btn-sm btn-secondary active" id="btnChartBar" onclick="setChartType('bar')" style="padding:4px 8px;font-size:11px">📊 Bar</button>
+                  <button class="btn btn-sm btn-secondary" id="btnChartRadar" onclick="setChartType('radar')" style="padding:4px 8px;font-size:11px">🕸️ Radar</button>
+                </div>
+              </div>
+              <div class="chart-wrap">
+                <canvas id="poChart"></canvas>
+              </div>
+              <div id="poAvgBanner" style="margin-top:var(--sp-md);padding:var(--sp-md);background:var(--surface);border-radius:var(--r-md);text-align:center"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 5: AT-RISK STUDENTS -->
+        <div class="section-card">
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">🚨 Section 5: At-Risk Students & AI Remedial Plans</div>
+                <div class="card-subtitle">Students who failed to meet Level 1 thresholds on specific Course Outcomes</div>
+              </div>
+              <div style="display:flex;gap:12px;align-items:center">
+                <button class="btn btn-primary btn-sm" onclick="saveRemedialLedger()">💾 Save Remedial Records</button>
+                <span class="badge badge-danger">Attention Required</span>
+              </div>
+            </div>
+            <div class="table-wrapper">
+              <table class="att-table">
+                <thead>
+                  <tr>
+                    <th>Student Name</th>
+                    <th>Weak COs & Retest Scores</th>
+                    <th>Remedial Plan</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="atRiskBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /results -->
+    </div>
+  </main>
+</div>
+
+<div id="toast-container"></div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="../scripts/data.js?v=2"></script>`r`n<script src="../scripts/api.js"></script>
+<script src="../scripts/auth.js?v=2"></script>
+<script src="../scripts/ai-mock.js?v=2"></script>
+<script src="../scripts/attainment.js"></script>
+<script src="../scripts/utils.js"></script>
+<script>
+(async () => {
+  await (window._apiReady || Promise.resolve());
+  const user = Auth.requireAuth(['faculty', 'hod']);
+  if (!user) throw new Error('Not authorized');
+  Auth.populateSidebar(user);
+
+  let poChartInst = null;
+
+  // Populate course selector
+  function loadCourses() {
+    const sel = document.getElementById('courseSelect');
+    const courses = DB.courses.byFaculty(user.id);
+    courses.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.id;
+      opt.textContent = `${c.code} – ${c.name}`;
+      sel.appendChild(opt);
+    });
+    const saved = sessionStorage.getItem('selected_course_id');
+    if (saved) sel.value = saved;
+    else if (courses.length) sel.value = courses[0].id;
+  }
+
+  function showBanner(course) {
+    const b = document.getElementById('courseBanner');
+    b.classList.remove('hidden');
+    document.getElementById('bannerName').textContent = `${course.code} – ${course.name}`;
+    document.getElementById('bannerMeta').textContent = `Sem ${course.semester} | ${course.class} | Div ${course.division} | AY ${course.year}`;
+    const dw = course.directWeight || 80;
+    const iw = course.indirectWeight || 20;
+    document.getElementById('bannerWeights').innerHTML = `
+      <div style="text-align:center;padding:var(--sp-sm) var(--sp-md);background:rgba(99,102,241,.15);border-radius:var(--r-md)">
+        <div style="font-size:22px;font-weight:800;color:var(--primary)">${dw}%</div>
+        <div style="font-size:11px;color:var(--text-secondary)">Direct Weight</div>
+      </div>
+      <div style="text-align:center;padding:var(--sp-sm) var(--sp-md);background:rgba(16,185,129,.12);border-radius:var(--r-md)">
+        <div style="font-size:22px;font-weight:800;color:var(--success)">${iw}%</div>
+        <div style="font-size:11px;color:var(--text-secondary)">Indirect Weight</div>
+      </div>`;
+  }
+
+  function renderDirect(directData, course) {
+    const levels = course.attainmentLevels || {1:65,2:75,3:85};
+    const tbody = document.getElementById('directBody');
+    tbody.innerHTML = '';
+    if (!directData.length) {
+      tbody.innerHTML = `<tr><td colspan="11" class="text-center text-muted" style="padding:32px">No CO data. Set up COs in the CO & PO Setup page.</td></tr>`;
+      return;
+    }
+    directData.forEach(d => {
+      const coLevels = d.co.levels || {};
+      const targetPct = (coLevels[2] !== undefined && coLevels[2] !== null && coLevels[2] !== '') ? coLevels[2] : (levels[2] || 75);
+      const coThreshold = (d.co.studentThreshold !== undefined && d.co.studentThreshold !== null && d.co.studentThreshold !== '') ? d.co.studentThreshold : 60;
+      
+      tbody.insertAdjacentHTML('beforeend', `
+        <tr>
+          <td><strong>${d.coCode}</strong></td>
+          <td style="max-width:280px;font-size:12px">${d.co.text.substring(0,80)}${d.co.text.length>80?'…':''}</td>
+          <td><span class="badge badge-primary">${d.co.bloomsLevel}</span></td>
+          <td class="pct-cell">${targetPct}%<br><span style="font-size:10px;color:var(--text-muted);font-weight:normal">Pass: ${coThreshold}%</span></td>
+          <td class="pct-cell">${d.iaPct !== null ? d.iaPct.toFixed(1)+'%' : '—'}</td>
+          <td class="pct-cell">${d.msePct !== null ? d.msePct.toFixed(1)+'%' : '—'}</td>
+          <td class="pct-cell">${d.ciePct !== null ? d.ciePct.toFixed(1)+'%' : '—'}</td>
+          <td>${d.cieLevel !== null ? attBadge(d.cieLevel) : '<span class="text-muted">—</span>'}</td>
+          <td class="pct-cell">${d.esePct !== null ? d.esePct.toFixed(1)+'%' : '—'}</td>
+          <td>${d.eseLevel !== null ? attBadge(d.eseLevel) : '<span class="text-muted">—</span>'}</td>
+          <td>${d.directLevel !== null ? attBadge(d.directLevel) : '<span class="text-muted">—</span>'}</td>
+        </tr>`);
+    });
+  }
+
+  function renderIndirect(indirectData, directData) {
+    const tbody = document.getElementById('indirectBody');
+    tbody.innerHTML = '';
+    const course = DB.courses.byId(document.getElementById('courseSelect').value);
+    const levels = course.attainmentLevels || {1:65,2:75,3:85};
+    indirectData.forEach((d, i) => {
+      const co = directData[i]?.co;
+      if (!co) return;
+      const coLevels = co.levels || {};
+      const targetPct = (coLevels[2] !== undefined && coLevels[2] !== null && coLevels[2] !== '') ? coLevels[2] : (levels[2] || 75);
+      const coThreshold = (co.studentThreshold !== undefined && co.studentThreshold !== null && co.studentThreshold !== '') ? co.studentThreshold : 60;
+      
+      tbody.insertAdjacentHTML('beforeend', `
+        <tr>
+          <td><strong>CO${d.coNo}</strong></td>
+          <td style="max-width:280px;font-size:12px">${co.text.substring(0,80)}${co.text.length>80?'…':''}</td>
+          <td><span class="badge badge-primary">${co.bloomsLevel||'—'}</span></td>
+          <td class="pct-cell">${targetPct}%<br><span style="font-size:10px;color:var(--text-muted);font-weight:normal">Pass: ${coThreshold}%</span></td>
+          <td class="pct-cell">${d.surveyPct !== null ? d.surveyPct.toFixed(1)+'%' : '<span style="color:var(--text-muted)">No data</span>'}</td>
+          <td>${d.indirectLevel !== null ? attBadge(d.indirectLevel) : '<span class="text-muted">—</span>'}</td>
+        </tr>`);
+    });
+  }
+
+  function renderFinal(finalData) {
+    const tbody = document.getElementById('finalBody');
+    tbody.innerHTML = '';
+    const summary = document.getElementById('finalSummary');
+    let attainedCount = 0;
+
+    finalData.forEach(d => {
+      const attained = d.finalLevel !== null && d.finalLevel >= 2;
+      if (attained) attainedCount++;
+      tbody.insertAdjacentHTML('beforeend', `
+        <tr>
+          <td><strong>${d.coCode}</strong></td>
+          <td style="max-width:260px;font-size:12px">${d.co.text.substring(0,70)}${d.co.text.length>70?'…':''}</td>
+          <td>${d.directLevel !== null ? attBadge(d.directLevel) : '<span class="text-muted">—</span>'}</td>
+          <td>${d.indirectLevel !== null ? attBadge(d.indirectLevel) : '<span class="text-muted">—</span>'}</td>
+          <td>${d.finalLevel !== null ? attBadge(d.finalLevel) : '<span class="text-muted">—</span>'}</td>
+          <td>${attained 
+            ? '<span class="badge badge-success">✓ Attained</span>' 
+            : '<span class="badge badge-danger">✗ Not Attained</span>'}</td>
+        </tr>`);
+    });
+
+    const course = DB.courses.byId(document.getElementById('courseSelect').value);
+    const target = parseFloat(course.targetLevel) || 2.0;
+    const avgLevel = finalData.length ? finalData.reduce((acc,d)=>acc+(d.finalLevel||0),0) / finalData.length : 0;
+    
+    let targetHtml = '';
+    if (avgLevel >= target) {
+      targetHtml = `<div class="s-val" style="color:var(--success); font-size:14px; margin-top:8px">🎯 Target Met! (${avgLevel.toFixed(2)} ≥ ${target.toFixed(2)})</div>`;
+    } else {
+      targetHtml = `<div class="s-val" style="color:var(--warning); font-size:14px; margin-top:8px">⚠️ Target Not Met (${avgLevel.toFixed(2)} < ${target.toFixed(2)})</div>`;
+    }
+
+    summary.innerHTML = `
+      <div class="summary-item">
+        <div class="s-label">Total COs</div>
+        <div class="s-val">${finalData.length}</div>
+      </div>
+      <div class="summary-item">
+        <div class="s-label">Attained (≥L2)</div>
+        <div class="s-val" style="color:var(--success)">${attainedCount}</div>
+      </div>
+      <div class="summary-item">
+        <div class="s-label">Not Attained</div>
+        <div class="s-val" style="color:var(--danger)">${finalData.length - attainedCount}</div>
+      </div>
+      <div class="summary-item" style="grid-column: span 3; text-align:center; padding-top:12px">
+        <div class="s-label">Overall Course Attainment Level vs CQI Target</div>
+        ${targetHtml}
+      </div>`;
+  }
+
+  function renderPO(poData) {
+    const tbody = document.getElementById('poBody');
+    tbody.innerHTML = '';
+    const poEntries = Object.values(poData);
+    let totalScore = 0, scoredCount = 0;
+
+    poEntries.forEach(p => {
+      const hasData = p.rawScore !== null;
+      if (hasData) { totalScore += p.rawScore; scoredCount++; }
+      tbody.insertAdjacentHTML('beforeend', `
+        <tr>
+          <td><strong>${p.po}</strong></td>
+          <td class="pct-cell">${hasData ? p.rawScore.toFixed(2) + ' / 3.00' : '—'}</td>
+          <td>${hasData ? attBadge(p.level) : '<span class="text-muted">No mapping</span>'}</td>
+        </tr>`);
+    });
+
+    const avgScore = scoredCount > 0 ? (totalScore / scoredCount).toFixed(2) : '—';
+    document.getElementById('poAvgBanner').innerHTML = `
+      <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em">Average PO Attainment Score</div>
+      <div style="font-size:28px;font-weight:800;color:var(--primary);margin:4px 0">${avgScore}<span style="font-size:14px;color:var(--text-secondary)"> / 3.00</span></div>
+      <div style="font-size:12px;color:var(--text-secondary)">${scoredCount} of ${poEntries.length} POs have CO-PO mapping</div>`;
+
+    lastPoData = poData;
+    renderPOChart(poData);
+  }
+
+  let activeChartType = 'bar';
+  let lastPoData = null;
+
+  function setChartType(type) {
+    activeChartType = type;
+    document.getElementById('btnChartBar').classList.toggle('active', type === 'bar');
+    document.getElementById('btnChartRadar').classList.toggle('active', type === 'radar');
+    if (lastPoData) {
+      renderPOChart(lastPoData);
+    }
+  }
+
+  function renderPOChart(poData) {
+    if (poChartInst) poChartInst.destroy();
+    
+    const course = DB.courses.byId(document.getElementById('courseSelect').value);
+    const targetLvl = parseFloat(course.targetLevel) || 2.0;
+
+    const labels = Object.keys(poData);
+    const vals = Object.values(poData).map(p => p.rawScore !== null ? parseFloat(p.rawScore.toFixed(2)) : 0);
+    const targetVals = labels.map(() => targetLvl);
+    const ctx = document.getElementById('poChart').getContext('2d');
+    
+    if (activeChartType === 'bar') {
+      const colors = vals.map(v => v >= 2.5 ? 'rgba(16,185,129,0.7)' : v >= 1.5 ? 'rgba(245,158,11,0.7)' : v >= 0.5 ? 'rgba(249,115,22,0.7)' : 'rgba(239,68,68,0.5)');
+      poChartInst = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [
+            {
+              label: 'Actual Attainment',
+              data: vals,
+              backgroundColor: colors,
+              borderRadius: 8,
+              borderWidth: 0,
+            },
+            {
+              label: `CQI Target (${targetLvl})`,
+              data: targetVals,
+              type: 'line',
+              borderColor: '#2563EB',
+              borderWidth: 2,
+              borderDash: [5, 5],
+              fill: false,
+              pointRadius: 0,
+            }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          scales: {
+            x: { ticks: { color: '#64748B', font:{size:11} }, grid: { color: 'rgba(0,0,0,0.05)' } },
+            y: { min: 0, max: 3, ticks: { color: '#64748B', stepSize:1, callback: v => `L${v}` }, grid: { color: 'rgba(0,0,0,0.06)' } }
+          },
+          plugins: {
+            legend: { display: true, labels: { color: '#475569', font: { size: 12 } } },
+            tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.raw.toFixed ? ctx.raw.toFixed(2) : ctx.raw} / 3.00` } }
+          }
+        }
+      });
+    } else {
+      poChartInst = new Chart(ctx, {
+        type: 'radar',
+        data: {
+          labels,
+          datasets: [
+            {
+              label: 'Actual Attainment',
+              data: vals,
+              backgroundColor: 'rgba(139, 92, 246, 0.2)',
+              borderColor: '#3B82F6',
+              borderWidth: 2,
+              pointBackgroundColor: '#3B82F6',
+            },
+            {
+              label: 'Target Attainment',
+              data: targetVals,
+              backgroundColor: 'rgba(99, 102, 241, 0.05)',
+              borderColor: '#2563EB',
+              borderWidth: 1.5,
+              borderDash: [3, 3],
+              pointBackgroundColor: '#2563EB',
+            }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          scales: {
+            r: {
+              angleLines: { color: 'rgba(0,0,0,0.08)' },
+              grid: { color: 'rgba(0,0,0,0.08)' },
+              pointLabels: { color: '#475569', font: { size: 11 } },
+              ticks: { color: '#475569', backdropColor: 'transparent', stepSize: 1 },
+              min: 0,
+              max: 3
+            }
+          },
+          plugins: {
+            legend: { display: true, labels: { color: '#64748B' } }
+          }
+        }
+      });
+    }
+  }
+
+  function calculate() {
+    const courseId = document.getElementById('courseSelect').value;
+    if (!courseId) { Toast.warning('Please select a course first.'); return; }
+    sessionStorage.setItem('selected_course_id', courseId);
+
+    const course = DB.courses.byId(courseId);
+    showBanner(course);
+
+    const btn = document.getElementById('calcBtn');
+    btnLoading(btn, true);
+
+    setTimeout(() => {
+      try {
+        const directData = Attainment.calcCODirect(courseId);
+        const indirectData = Attainment.calcCOIndirect(courseId);
+        const finalData = Attainment.calcCOFinal(courseId);
+        const poData = Attainment.calcPOAttainment(courseId);
+
+        renderDirect(directData, course);
+        renderIndirect(indirectData, directData);
+        renderFinal(finalData);
+        renderPO(poData);
+        renderAtRisk(courseId);
+
+        document.getElementById('emptyState').classList.add('hidden');
+        document.getElementById('results').classList.remove('hidden');
+        Toast.success('Attainment calculated successfully!');
+      } catch(e) {
+        Toast.error('Error calculating attainment: ' + e.message);
+      } finally {
+        btnLoading(btn, false);
+      }
+    }, 300);
+  }
+
+  function renderAtRisk(courseId) {
+    const list = Attainment.getAtRiskStudents(courseId, 60);
+    const tbody = document.getElementById('atRiskBody');
+    tbody.innerHTML = '';
+    
+    if (list.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted" style="padding:24px">No at-risk students identified.</td></tr>';
+      return;
+    }
+
+    list.forEach(item => {
+      const s = item.student;
+      const rem = DB.remedial.get(courseId, s.prn) || { plan: '', remedialDone: false, retestScores: {} };
+
+      let coHtml = '';
+      item.weakCOs.forEach(c => {
+        const isRes = c.resolved;
+        const badgeClass = isRes ? 'badge-success' : 'badge-warning';
+        const statusText = isRes ? `Resolved (${c.retestScore}%)` : `(${c.pct}%)`;
+        
+        coHtml += `
+          <div style="margin-bottom:8px">
+            <span class="badge ${badgeClass}">${c.code} ${statusText}</span>
+            <div style="display:flex;align-items:center;gap:6px;margin-top:4px">
+              <span style="font-size:11px;color:var(--text-muted)">Retest %:</span>
+              <input type="number" data-prn="${s.prn}" data-co="${c.no}" value="${rem.retestScores?.[c.no] !== undefined && rem.retestScores?.[c.no] !== null ? rem.retestScores[c.no] : ''}" class="form-control form-control-sm retest-input" style="width:75px;padding:2px 4px;height:24px;font-size:11px;display:inline-block" min="0" max="100" placeholder="Retest %">
+            </div>
+          </div>
+        `;
+      });
+
+      const cosForPlan = item.weakCOs.map(c => {
+        const dbCo = DB.cos.byCourse(courseId).find(x => x.no === c.no);
+        return dbCo || { code: c.code, text: '' };
+      });
+      const coJson = encodeURIComponent(JSON.stringify(cosForPlan));
+
+      const planBtn = rem.plan 
+        ? `<button class="btn btn-sm btn-secondary" onclick="showRemedialPlanModal('${s.prn}', '${s.name}')">📖 View/Edit Plan</button>`
+        : `<button class="btn btn-sm" style="background:var(--primary);color:white;border:none" onclick="getRemedialPlan('${s.prn}', '${s.name}', '${coJson}', this)">✨ Generate Plan</button>`;
+
+      tbody.insertAdjacentHTML('beforeend', `
+        <tr>
+          <td><strong>${s.name}</strong><br><span style="font-size:11px;color:var(--text-muted)">${s.email}</span></td>
+          <td>${coHtml}</td>
+          <td>${planBtn}</td>
+          <td>
+            <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:12px">
+              <input type="checkbox" class="done-checkbox" data-prn="${s.prn}" ${rem.remedialDone ? 'checked' : ''}> Done
+            </label>
+          </td>
+          <td>
+            <button class="btn btn-sm btn-primary" onclick="saveStudentRemedial('${s.prn}')">💾 Save</button>
+          </td>
+        </tr>
+      `);
+    });
+  }
+
+  async function getRemedialPlan(prn, name, coJson, btn) {
+    const courseId = document.getElementById('courseSelect').value;
+    const cos = JSON.parse(decodeURIComponent(coJson));
+    const ogText = btn.innerHTML;
+    btn.innerHTML = '⏳ Generating...';
+    btn.disabled = true;
+    try {
+      const plan = await AI.generateRemedialPlan(name, cos);
+      const rem = DB.remedial.get(courseId, prn) || { plan: '', remedialDone: false, retestScores: {} };
+      rem.plan = plan;
+      DB.remedial.save(courseId, prn, rem);
+      Toast.success('AI Remedial Plan generated and saved!');
+      showRemedialPlanModal(prn, name);
+    } catch(e) {
+      Toast.error(e.message || 'Failed to generate plan.');
+    } finally {
+      btn.innerHTML = ogText;
+      btn.disabled = false;
+    }
+  }
+
+  async function showRemedialPlanModal(prn, name) {
+    const courseId = document.getElementById('courseSelect').value;
+    if (!courseId) return;
+    const rem = DB.remedial.get(courseId, prn) || { plan: '', remedialDone: false, retestScores: {} };
+
+    const contentHtml = `
+      <div class="form-group">
+        <label class="form-label" style="font-weight:600;margin-bottom:8px">Remedial Plan for ${name}:</label>
+        <textarea id="modalPlanText" class="form-control" rows="12" style="font-family:monospace;font-size:12px;resize:vertical;background:var(--surface);color:var(--text-primary);border-color:var(--border)">${rem.plan || ''}</textarea>
+      </div>
+      <div style="margin-top:12px;text-align:right;display:flex;justify-content:flex-end;gap:8px">
+        <button class="btn btn-secondary btn-sm" onclick="Modal.close()">Cancel</button>
+        <button class="btn btn-primary btn-sm" onclick="saveModalPlan('${prn}')">💾 Save Plan</button>
+      </div>
+    `;
+    Modal.alert('View / Edit Remedial Plan', contentHtml, null);
+  }
+
+  window.saveModalPlan = function(prn) {
+    const courseId = document.getElementById('courseSelect').value;
+    if (!courseId) return;
+    const planText = document.getElementById('modalPlanText').value.trim();
+    
+    const rem = DB.remedial.get(courseId, prn) || { plan: '', remedialDone: false, retestScores: {} };
+    rem.plan = planText;
+    
+    DB.remedial.save(courseId, prn, rem);
+    Modal.close();
+    Toast.success('Remedial plan saved successfully.');
+    calculate();
+  };
+
+  window.saveStudentRemedial = function(prn) {
+    const courseId = document.getElementById('courseSelect').value;
+    if (!courseId) return;
+
+    const rem = DB.remedial.get(courseId, prn) || { plan: '', remedialDone: false, retestScores: {} };
+
+    const doneChk = document.querySelector(`.done-checkbox[data-prn="${prn}"]`);
+    if (doneChk) {
+      rem.remedialDone = doneChk.checked;
+    }
+
+    const inputs = document.querySelectorAll(`.retest-input[data-prn="${prn}"]`);
+    if (!rem.retestScores) rem.retestScores = {};
+    inputs.forEach(inp => {
+      const coNo = inp.dataset.co;
+      const val = inp.value.trim();
+      rem.retestScores[coNo] = val === '' ? null : parseInt(val);
+    });
+
+    DB.remedial.save(courseId, prn, rem);
+    Toast.success('Student remedial record saved!');
+    calculate();
+  };
+
+  window.saveRemedialLedger = function() {
+    const courseId = document.getElementById('courseSelect').value;
+    if (!courseId) return;
+
+    const inputs = document.querySelectorAll('.retest-input');
+    const uniquePRNs = [...new Set(Array.from(inputs).map(inp => inp.dataset.prn))];
+
+    uniquePRNs.forEach(prn => {
+      const rem = DB.remedial.get(courseId, prn) || { plan: '', remedialDone: false, retestScores: {} };
+      
+      const doneChk = document.querySelector(`.done-checkbox[data-prn="${prn}"]`);
+      if (doneChk) rem.remedialDone = doneChk.checked;
+
+      const rowInputs = document.querySelectorAll(`.retest-input[data-prn="${prn}"]`);
+      if (!rem.retestScores) rem.retestScores = {};
+      rowInputs.forEach(inp => {
+        const coNo = inp.dataset.co;
+        const val = inp.value.trim();
+        rem.retestScores[coNo] = val === '' ? null : parseInt(val);
+      });
+
+      DB.remedial.save(courseId, prn, rem);
+    });
+
+    Toast.success('All remedial records saved!');
+    calculate();
+  };
+
+  document.getElementById('calcBtn').addEventListener('click', calculate);
+
+  loadCourses();
+  // Auto-calculate if course already selected
+  const saved = sessionStorage.getItem('selected_course_id');
+  if (saved) {
+    document.getElementById('courseSelect').value = saved;
+    setTimeout(calculate, 200);
+  }
+})();
+</script>
+<script src="../scripts/ai-chat.js"></script>\n</body>
+</html>

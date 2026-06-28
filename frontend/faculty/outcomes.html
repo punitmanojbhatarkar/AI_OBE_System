@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CO & PO Setup | OBE System – MITAOE</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800" rel="stylesheet">
+  <link rel="stylesheet" href="../styles/main.css?v=6">
+  <link rel="stylesheet" href="../styles/components.css?v=6">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-logo"><div class="logo-icon">OBE</div><div><div class="logo-text">OBE System</div><div class="logo-sub">MITAOE</div></div></div>
+    <nav class="sidebar-nav">
+      <p class="nav-section-label">Overview</p>
+      <a class="nav-item" href="dashboard.html">📊 Dashboard</a>
+      <a class="nav-item" href="courses.html">📚 My Courses</a>
+      <p class="nav-section-label">Course Management</p>
+      <a class="nav-item" href="syllabus.html">📖 Syllabus Setup</a>
+      <a class="nav-item" href="outcomes.html">🎯 CO & PO Setup</a>
+      <a class="nav-item" href="co-po-map.html">🗺️ CO-PO Mapping</a>
+      <a class="nav-item" href="6a-matrix.html">📋 6A Indicator Mapping</a>
+      <a class="nav-item" href="students.html">👥 Students</a>
+      <p class="nav-section-label">Assessment</p>
+      <a class="nav-item" href="marks.html">📝 Marks Entry</a>
+      <a class="nav-item" href="attainment.html">📈 Attainment</a>
+      <a class="nav-item" href="assignments.html">🤖 Assignments & AI</a>
+      <a class="nav-item" href="question-paper.html">📄 Question Paper</a>
+      <a class="nav-item" href="reports.html">📄 Reports & Export</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-card"><div class="user-avatar"></div><div><div class="user-name"></div><div class="user-role"></div></div></div>
+      <button class="btn btn-ghost btn-sm w-full" data-action="logout" style="margin-top:8px">🚪 Logout</button>
+    </div>
+  </aside>
+  <main class="main-content">
+    <header class="topbar">
+      <div class="topbar-left"><h1 class="topbar-title">CO & PO Setup</h1>
+        <div class="topbar-breadcrumb">Course Management <span>&rsaquo;</span> CO Setup</div>
+      </div>
+      <div class="topbar-right" style="display:flex;gap:12px;align-items:center">
+        <select class="form-control" id="course-select" style="width:220px"><option value="">— Select Course —</option></select>
+        <select class="form-control" id="preset-select" onchange="applyThresholdPreset(this.value)" style="width:160px">
+          <option value="">— Apply Preset —</option>
+          <option value="standard">Standard Defaults (65/75/85)</option>
+          <option value="hard">Hard Course (50/60/70)</option>
+          <option value="easy">Easy Course (75/85/95)</option>
+        </select>
+        <button class="btn btn-primary btn-sm" onclick="saveAll()">💾 Save All Changes</button>
+      </div>
+    </header>
+    <div class="page-content">
+
+      <!-- Course Outcomes Section -->
+      <div class="card mb-lg">
+        <div class="card-header">
+          <div><div class="card-title">📋 Course Outcomes (COs)</div><div class="card-subtitle">Define up to 6 Course Outcomes with Bloom's Taxonomy level</div></div>
+          <button class="btn btn-sm" style="background:var(--primary);color:white;border:none" onclick="checkBloomsWithAI()">✨ Check Bloom's with AI</button>
+        </div>
+        <div class="table-wrapper">
+          <table id="co-table">
+            <thead>
+              <tr>
+                <th style="width:60px">CO</th>
+                <th>Outcome Description</th>
+                <th style="width:130px">Bloom's Level</th>
+                <th style="width:90px" title="Minimum % of marks a student must score to count as attained">Target Student (%)</th>
+                <th style="width:70px" title="Cohort % of students required for Level 1 attainment">L1 (%)</th>
+                <th style="width:70px" title="Cohort % of students required for Level 2 attainment">L2 (%)</th>
+                <th style="width:70px" title="Cohort % of students required for Level 3 attainment">L3 (%)</th>
+                <th style="width:160px">Assessed Through</th>
+              </tr>
+            </thead>
+            <tbody id="co-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- CQI Target Setting -->
+      <div class="card mb-lg" id="cqi-card">
+        <div class="card-header"><div><div class="card-title">🎯 CQI Target Configuration</div><div class="card-subtitle">Set the Continuous Quality Improvement target for this academic year</div></div></div>
+        <div class="grid-2" style="gap:16px;padding:4px">
+          <div class="form-group">
+            <label class="form-label">Target Attainment Level (0.0 to 3.0)</label>
+            <input type="number" class="form-control" id="cqi-target" min="0" max="3" step="0.1" value="2.0">
+            <div style="font-size:11px; color:var(--text-secondary); margin-top:4px;">Set based on previous year's attainment. If met, raise for next year.</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Justification / Rationale</label>
+            <input type="text" class="form-control" id="cqi-justification" placeholder="E.g., Increased from 1.8 to 2.0 based on last year's results...">
+          </div>
+        </div>
+      </div>
+
+      <!-- Attainment Thresholds -->
+      <div class="card mb-lg">
+        <div class="card-header">
+          <div><div class="card-title">📊 Attainment Level Thresholds</div><div class="card-subtitle">% of students who must score ≥60% to count as "attained" at each level</div></div>
+          <select id="preset-select" class="form-control" style="width:auto; display:inline-block;" onchange="applyThresholdPreset(this.value)">
+            <option value="">Apply Preset...</option>
+            <option value="hard">Strict (50/60/70)</option>
+            <option value="easy">Lenient (75/85/95)</option>
+          </select>
+        </div>
+        <div class="grid-3" style="gap:16px;padding:4px">
+          <div class="form-group">
+            <label class="form-label">Level 1 Threshold (%)</label>
+            <input type="number" class="form-control" id="thresh-1" min="0" max="100" value="65">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Level 2 Threshold (%)</label>
+            <input type="number" class="form-control" id="thresh-2" min="0" max="100" value="75">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Level 3 Threshold (%)</label>
+            <input type="number" class="form-control" id="thresh-3" min="0" max="100" value="85">
+          </div>
+        </div>
+        <div class="grid-2" style="gap:16px;padding:4px;margin-top:8px">
+          <div class="form-group">
+            <label class="form-label">Direct Assessment Weight (%)</label>
+            <input type="number" class="form-control" id="direct-w" min="0" max="100" value="80">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Indirect Assessment Weight (%)</label>
+            <input type="number" class="form-control" id="indirect-w" min="0" max="100" value="20">
+          </div>
+        </div>
+      </div>
+
+      <!-- Program Outcomes Reference -->
+      <div class="card">
+        <div class="card-header"><div><div class="card-title">🎓 Program Outcomes (POs) — Washington Accord</div><div class="card-subtitle">Standard PO1-PO11 definitions + editable PSO1-PSO3</div></div></div>
+        <div class="table-wrapper">
+          <table>
+            <thead><tr><th style="width:70px">PO/PSO</th><th>Description</th><th style="width:80px">Status</th></tr></thead>
+            <tbody id="po-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+<div id="toast-container"></div>
+<script src="../scripts/data.js?v=2"></script>`r`n<script src="../scripts/api.js"></script>
+<script src="../scripts/auth.js?v=2"></script>
+<script src="../scripts/ai-mock.js?v=2"></script>
+<script src="../scripts/utils.js"></script>
+<script>
+(async () => {
+  await (window._apiReady || Promise.resolve());
+  const user = Auth.requireAuth(['faculty', 'hod']);
+if(!user) throw 0;
+Auth.populateSidebar(user);
+
+const PO_DEFS = {
+  PO1:'Engineering Knowledge: Apply the knowledge of mathematics, science, engineering fundamentals.',
+  PO2:'Problem Analysis: Identify, formulate, review research literature, and analyze complex engineering problems.',
+  PO3:'Design/Development of Solutions: Design solutions for complex engineering problems and design system components.',
+  PO4:'Conduct Investigations: Use research-based knowledge and research methods including design of experiments.',
+  PO5:'Engineering Tool Usage: Create, select, and apply appropriate techniques, resources, and modern engineering & IT tools.',
+  PO6:'The Engineer and The World: Analyze and evaluate societal and environmental aspects while solving complex engineering problems.',
+  PO7:'Ethics: Apply ethical principles and commit to professional ethics, human values, diversity and inclusion.',
+  PO8:'Individual and Collaborative Team work: Function effectively as an individual, and as a member or leader in diverse teams.',
+  PO9:'Communication: Communicate effectively and inclusively within the engineering community and society at large.',
+  PO10:'Project Management and Finance: Apply knowledge and understanding of engineering management principles and economic decision-making.',
+  PO11:'Life-Long Learning: Recognize the need for, and have the preparation and ability for independent and life-long learning.',
+};
+const PSO_DEFAULTS = {
+  PSO1:'Domain-Specific Knowledge in Data Science and Analytics.',
+  PSO2:'Industry-Readiness through practical projects and tool proficiency.',
+  PSO3:'Research Aptitude and ability to apply scientific reasoning to novel problems.',
+};
+
+let currentCourseId = null;
+let currentCOs = [];
+
+// Course selector
+const sel = document.getElementById('course-select');
+const courses = DB.courses.byFaculty(user.id);
+courses.forEach(c => { const o=document.createElement('option'); o.value=c.id; o.textContent=`${c.code} – ${c.name}`; sel.appendChild(o); });
+
+const stored = sessionStorage.getItem('selected_course_id');
+if(stored && courses.find(c=>c.id===stored)) { sel.value=stored; loadCourse(stored); }
+else if(courses.length) { sel.value=courses[0].id; loadCourse(courses[0].id); }
+else { showEmptyState(); }
+
+sel.addEventListener('change', e => { if(e.target.value) { sessionStorage.setItem('selected_course_id',e.target.value); loadCourse(e.target.value); }});
+
+function loadCourse(cid) {
+  currentCourseId = cid;
+  const course = DB.courses.byId(cid);
+  if(!course) return;
+
+  // Load CQI & Thresholds
+  document.getElementById('cqi-target').value = course.targetLevel || 2.0;
+  document.getElementById('cqi-justification').value = course.targetJustification || '';
+  document.getElementById('thresh-1').value = course.attainmentLevels?.[1] || 65;
+  document.getElementById('thresh-2').value = course.attainmentLevels?.[2] || 75;
+  document.getElementById('thresh-3').value = course.attainmentLevels?.[3] || 85;
+  document.getElementById('direct-w').value = course.directWeight || 80;
+  document.getElementById('indirect-w').value = course.indirectWeight || 20;
+
+  // Load COs
+  const allCOs = DB.cos.byCourse(cid);
+  currentCOs = [];
+  for(let i=1;i<=6;i++) {
+    const existing = allCOs.find(c=>c.no===i);
+    currentCOs.push(existing || {id:DB.uid(),courseId:cid,no:i,code:'CO'+i,text:'',bloomsLevel:'',assessedThrough:[]});
+  }
+  renderCOs();
+  renderPOs();
+
+  // Enforce Course Lock
+  const isLocked = !!course.isLocked;
+  document.querySelectorAll('input, select, textarea, button[onclick="saveAll()"], button[onclick="checkBloomsWithAI()"]').forEach(el => {
+    if (el.id !== 'course-select') el.disabled = isLocked;
+  });
+  if (isLocked) {
+    Toast.warning('This course is locked by an Audit. Modifications are disabled.');
+  }
+}
+
+function showEmptyState() {
+  document.getElementById('co-body').innerHTML = `<tr><td colspan="4" style="text-align:center;padding:30px;color:var(--text-secondary)">No course selected. Please add a course in the "My Courses" tab first.</td></tr>`;
+  document.getElementById('po-body').innerHTML = `<tr><td colspan="3" style="text-align:center;padding:30px;color:var(--text-secondary)">No course selected.</td></tr>`;
+}
+
+function renderCOs() {
+  const body = document.getElementById('co-body');
+  body.innerHTML = '';
+  const blooms = ['','L1','L2','L3','L4','L5','L6'];
+  
+  // Resolve course-level defaults for placeholders
+  const course = DB.courses.byId(currentCourseId);
+  const courseL1 = course?.attainmentLevels?.[1] || 65;
+  const courseL2 = course?.attainmentLevels?.[2] || 75;
+  const courseL3 = course?.attainmentLevels?.[3] || 85;
+
+  currentCOs.forEach((co,idx) => {
+    const tr = document.createElement('tr');
+    const bOpts = blooms.map(b => `<option value="${b}" ${co.bloomsLevel===b?'selected':''}>${b?b+' – '+Fmt.bloom(b):''}</option>`).join('');
+    const isIA  = (co.assessedThrough||[]).includes('ia');
+    const isMSE = (co.assessedThrough||[]).includes('mse');
+    const isESE = (co.assessedThrough||[]).includes('ese');
+    
+    const studThresh = co.studentThreshold !== undefined && co.studentThreshold !== null ? co.studentThreshold : '';
+    const l1Val = co.levels?.[1] !== undefined && co.levels?.[1] !== null ? co.levels[1] : '';
+    const l2Val = co.levels?.[2] !== undefined && co.levels?.[2] !== null ? co.levels[2] : '';
+    const l3Val = co.levels?.[3] !== undefined && co.levels?.[3] !== null ? co.levels[3] : '';
+
+    tr.innerHTML = `
+      <td><span class="badge badge-primary">${co.code}</span></td>
+      <td>
+        <textarea class="form-control" rows="2" data-idx="${idx}" data-field="text" style="resize:vertical;min-height:50px">${co.text||''}</textarea>
+        <div style="margin-top:6px; display:flex; align-items:center; gap:8px">
+          <span style="font-size:10px; color:var(--text-secondary); font-weight:600; text-transform:uppercase; flex-shrink:0">Survey Q:</span>
+          <input type="text" class="form-control" data-idx="${idx}" data-field="surveyQuestion" value="${co.surveyQuestion||''}" placeholder="Defaults to CO description..." style="font-size:11px; padding:3px 8px; height:auto; flex:1">
+        </div>
+      </td>
+      <td><select class="form-control" data-idx="${idx}" data-field="blooms">${bOpts}</select></td>
+      <td><input type="number" class="form-control" data-idx="${idx}" data-field="studentThreshold" min="0" max="100" value="${studThresh}" placeholder="60" style="text-align:center;width:80px"></td>
+      <td><input type="number" class="form-control" data-idx="${idx}" data-field="level1" min="0" max="100" value="${l1Val}" placeholder="${courseL1}" style="text-align:center;width:65px"></td>
+      <td><input type="number" class="form-control" data-idx="${idx}" data-field="level2" min="0" max="100" value="${l2Val}" placeholder="${courseL2}" style="text-align:center;width:65px"></td>
+      <td><input type="number" class="form-control" data-idx="${idx}" data-field="level3" min="0" max="100" value="${l3Val}" placeholder="${courseL3}" style="text-align:center;width:65px"></td>
+      <td>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer"><input type="checkbox" data-idx="${idx}" data-assess="ia" ${isIA?'checked':''}> IA</label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer"><input type="checkbox" data-idx="${idx}" data-assess="mse" ${isMSE?'checked':''}> MSE</label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer"><input type="checkbox" data-idx="${idx}" data-assess="ese" ${isESE?'checked':''}> ESE</label>
+        </div>
+        <div id="ai-feedback-${idx}" style="font-size:11px; margin-top:8px; display:none; padding:4px 8px; border-radius:4px"></div>
+      </td>`;
+    body.appendChild(tr);
+  });
+}
+
+function renderPOs() {
+  const body = document.getElementById('po-body');
+  body.innerHTML = '';
+  // Standard POs
+  Object.entries(PO_DEFS).forEach(([po,desc]) => {
+    body.innerHTML += `<tr><td><span class="badge badge-info">${po}</span></td><td style="font-size:13px">${desc}</td><td><span class="badge badge-success">Standard</span></td></tr>`;
+  });
+  // PSOs (editable)
+  Object.entries(PSO_DEFAULTS).forEach(([pso,desc]) => {
+    body.innerHTML += `<tr><td><span class="badge badge-warning">${pso}</span></td><td><input type="text" class="form-control" id="pso-${pso}" value="${desc}" style="font-size:13px"></td><td><span class="badge badge-warning">Editable</span></td></tr>`;
+  });
+}
+
+function saveAll() {
+  if(!currentCourseId) { Toast.warning('Select a course first.'); return; }
+
+  // Save COs
+  const textareas = document.querySelectorAll('textarea[data-field="text"]');
+  const selects   = document.querySelectorAll('select[data-field="blooms"]');
+  const checks    = document.querySelectorAll('input[data-assess]');
+
+  textareas.forEach(t => { currentCOs[t.dataset.idx].text = t.value.trim(); });
+  selects.forEach(s => { currentCOs[s.dataset.idx].bloomsLevel = s.value; });
+
+  // Reset assessed through
+  currentCOs.forEach(co => co.assessedThrough = []);
+  checks.forEach(ch => {
+    if(ch.checked) currentCOs[ch.dataset.idx].assessedThrough.push(ch.dataset.assess);
+  });
+
+  // Read student threshold and level thresholds
+  for (let idx = 0; idx < currentCOs.length; idx++) {
+    const stEl = document.querySelector(`input[data-idx="${idx}"][data-field="studentThreshold"]`);
+    const l1El = document.querySelector(`input[data-idx="${idx}"][data-field="level1"]`);
+    const l2El = document.querySelector(`input[data-idx="${idx}"][data-field="level2"]`);
+    const l3El = document.querySelector(`input[data-idx="${idx}"][data-field="level3"]`);
+    const sqEl = document.querySelector(`input[data-idx="${idx}"][data-field="surveyQuestion"]`);
+
+    if (stEl) {
+      const stVal = stEl.value.trim();
+      currentCOs[idx].studentThreshold = stVal === '' ? null : parseInt(stVal);
+    }
+    
+    const l1Val = l1El ? l1El.value.trim() : '';
+    const l2Val = l2El ? l2El.value.trim() : '';
+    const l3Val = l3El ? l3El.value.trim() : '';
+
+    currentCOs[idx].levels = {
+      1: l1Val === '' ? null : parseInt(l1Val),
+      2: l2Val === '' ? null : parseInt(l2Val),
+      3: l3Val === '' ? null : parseInt(l3Val)
+    };
+
+    if (sqEl) {
+      currentCOs[idx].surveyQuestion = sqEl.value.trim() || null;
+    }
+  }
+
+  DB.cos.saveAll(currentCourseId, currentCOs);
+
+  // Save thresholds & CQI
+  const course = DB.courses.byId(currentCourseId);
+  course.targetLevel = parseFloat(document.getElementById('cqi-target').value) || 2.0;
+  course.targetJustification = document.getElementById('cqi-justification').value.trim();
+  course.attainmentLevels = {
+    1: parseInt(document.getElementById('thresh-1').value) || 65,
+    2: parseInt(document.getElementById('thresh-2').value) || 75,
+    3: parseInt(document.getElementById('thresh-3').value) || 85,
+  };
+  course.directWeight  = parseInt(document.getElementById('direct-w').value) || 80;
+  course.indirectWeight = parseInt(document.getElementById('indirect-w').value) || 20;
+  DB.courses.update(course);
+
+  // Re-render to update placeholders if global defaults changed
+  renderCOs();
+
+  Toast.success('Course Outcomes, CQI Target, and thresholds saved successfully!');
+}
+
+function applyThresholdPreset(type) {
+  if (!type) return;
+  let targetStud = 60;
+  let l1 = 65, l2 = 75, l3 = 85;
+
+  if (type === 'hard') {
+    targetStud = 50; l1 = 50; l2 = 60; l3 = 70;
+  } else if (type === 'easy') {
+    targetStud = 70; l1 = 75; l2 = 85; l3 = 95;
+  }
+
+  for (let idx = 0; idx < currentCOs.length; idx++) {
+    const stEl = document.querySelector(`input[data-idx="${idx}"][data-field="studentThreshold"]`);
+    const l1El = document.querySelector(`input[data-idx="${idx}"][data-field="level1"]`);
+    const l2El = document.querySelector(`input[data-idx="${idx}"][data-field="level2"]`);
+    const l3El = document.querySelector(`input[data-idx="${idx}"][data-field="level3"]`);
+
+    if (stEl) stEl.value = targetStud;
+    if (l1El) l1El.value = l1;
+    if (l2El) l2El.value = l2;
+    if (l3El) l3El.value = l3;
+  }
+  
+  Toast.info(`Applied ${type} preset values. Don't forget to click Save!`);
+  document.getElementById('preset-select').value = '';
+}
+
+async function checkBloomsWithAI() {
+  if(!currentCourseId) return Toast.warning('Select a course first.');
+  const btn = document.querySelector('button[onclick="checkBloomsWithAI()"]');
+  const ogText = btn.innerHTML;
+  btn.innerHTML = '⏳ Analyzing...';
+  btn.disabled = true;
+
+  // Sync inputs to memory before checking
+  const textareas = document.querySelectorAll('textarea[data-field="text"]');
+  const selects   = document.querySelectorAll('select[data-field="blooms"]');
+  textareas.forEach(t => { currentCOs[t.dataset.idx].text = t.value.trim(); });
+  selects.forEach(s => { currentCOs[s.dataset.idx].bloomsLevel = s.value; });
+
+  try {
+    const results = await AI.analyzeBlooms(currentCOs);
+    results.forEach((res, idx) => {
+      if(res.status === 'empty') return;
+      const fb = document.getElementById(`ai-feedback-${idx}`);
+      fb.style.display = 'block';
+      fb.textContent = res.suggestion;
+      if(res.status === 'perfect') {
+        fb.style.background = 'rgba(16,185,129,0.1)'; fb.style.color = 'var(--success)';
+      } else if(res.status === 'upgrade') {
+        fb.style.background = 'rgba(37,99,235,0.15)'; fb.style.color = 'var(--primary)';
+      } else {
+        fb.style.background = 'rgba(245,158,11,0.1)'; fb.style.color = 'var(--warning)';
+      }
+    });
+    Toast.success("AI Bloom's analysis complete.");
+  } catch(e) {
+    Toast.error(e.message || 'Analysis failed.');
+  } finally {
+    btn.innerHTML = ogText;
+    btn.disabled = false;
+  }
+}
+})();
+</script>
+<script src="../scripts/ai-chat.js"></script>\n</body>
+</html>

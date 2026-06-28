@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Faculty Dashboard | OBE System – MITAOE</title>
+  <meta name="description" content="Faculty OBE Dashboard – Course Outcomes & Attainment Overview">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../styles/main.css?v=6">
+  <link rel="stylesheet" href="../styles/components.css?v=6">
+  <style>
+    .chart-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--r-lg); padding: var(--sp-lg);
+      box-shadow: var(--shadow-sm);
+    }
+    .chart-title { font-size: 15px; font-weight: 700; margin-bottom: 4px; color: var(--text-primary); }
+    .chart-sub   { font-size: 12px; color: var(--text-secondary); margin-bottom: var(--sp-md); }
+    .ai-meter { display: flex; flex-direction: column; gap: 8px; }
+    .ai-meter-bar { height: 8px; background: var(--surface-2); border-radius: var(--r-full); overflow: hidden; border: 1px solid var(--border); }
+    .ai-meter-fill { height: 100%; background: var(--primary); border-radius: var(--r-full); transition: width 0.8s cubic-bezier(.4,0,.2,1); }
+    .course-card-mini {
+      display: flex; align-items: center; gap: var(--sp-md);
+      padding: var(--sp-md); background: var(--surface);
+      border: 1px solid var(--border); border-radius: var(--r-md);
+      transition: all var(--t-base); cursor: pointer;
+      box-shadow: var(--shadow-xs);
+    }
+    .course-card-mini:hover { border-color: var(--primary-mid); background: var(--primary-light); transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+    .course-mini-icon {
+      width: 42px; height: 42px; border-radius: var(--r-md);
+      background: var(--primary); display: flex; align-items: center;
+      justify-content: center; font-size: 16px; font-weight: 800;
+      color: #fff; flex-shrink: 0;
+    }
+    .quick-links { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+    .quick-link {
+      font-size: 11px; padding: 3px 9px; border-radius: var(--r-full);
+      background: var(--surface-2); color: var(--text-secondary);
+      border: 1px solid var(--border);
+      transition: all var(--t-fast); font-weight: 600;
+    }
+    .quick-link:hover { background: var(--primary-light); color: var(--primary); border-color: var(--primary-mid); }
+    .stat-trend { display: flex; align-items: center; gap: 4px; font-size: 11.5px; margin-top: 8px; }
+    .welcome-banner {
+      background: linear-gradient(135deg, #1D4ED8 0%, #2563EB 50%, #3B82F6 100%);
+      border-radius: var(--r-lg);
+      padding: var(--sp-lg) var(--sp-xl); margin-bottom: var(--sp-xl);
+      display: flex; align-items: center; justify-content: space-between;
+      box-shadow: 0 4px 20px rgba(37,99,235,0.25);
+      position: relative; overflow: hidden;
+    }
+    .welcome-banner::before {
+      content: ''; position: absolute; top: -40%; right: -5%;
+      width: 300px; height: 300px; border-radius: 50%;
+      background: rgba(0,0,0,0.05);
+    }
+    .welcome-text h2 { font-size: 22px; font-weight: 800; color: #fff; letter-spacing: -0.3px; }
+    .welcome-text p  { color: rgba(255,255,255,0.75); font-size: 14px; margin-top: 4px; }
+    .welcome-badge {
+      background: rgba(255,255,255,0.15); color: #fff;
+      padding: 8px 18px; border-radius: var(--r-full);
+      font-size: 13px; font-weight: 700;
+      border: 1px solid rgba(255,255,255,0.2);
+      backdrop-filter: blur(4px);
+    }
+  </style>
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">OBE</div>
+      <div><div class="logo-text">OBE System</div><div class="logo-sub">MITAOE</div></div>
+    </div>
+    <nav class="sidebar-nav">
+      <p class="nav-section-label">Overview</p>
+      <a class="nav-item" href="dashboard.html">📊 Dashboard</a>
+      <a class="nav-item" href="courses.html">📚 My Courses</a>
+      <p class="nav-section-label">Course Management</p>
+      <a class="nav-item" href="syllabus.html">📖 Syllabus Setup</a>
+      <a class="nav-item" href="outcomes.html">🎯 CO & PO Setup</a>
+      <a class="nav-item" href="co-po-map.html">🗺️ CO-PO Mapping</a>
+      <a class="nav-item" href="6a-matrix.html">📋 6A Indicator Mapping</a>
+      <a class="nav-item" href="students.html">👥 Students</a>
+      <p class="nav-section-label">Assessment</p>
+      <a class="nav-item" href="marks.html">📝 Marks Entry</a>
+      <a class="nav-item" href="attainment.html">📈 Attainment</a>
+      <a class="nav-item" href="assignments.html">🤖 Assignments & AI</a>
+      <a class="nav-item" href="question-paper.html">📄 Question Paper</a>
+      <a class="nav-item" href="reports.html">📄 Reports & Export</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="user-avatar"></div>
+        <div><div class="user-name"></div><div class="user-role"></div></div>
+      </div>
+      <button class="btn btn-ghost btn-sm w-full" data-action="logout" style="margin-top:8px">
+        🚪 Logout
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main-content">
+    <header class="topbar">
+      <div class="topbar-left">
+        <h1 class="topbar-title">Faculty Dashboard</h1>
+        <div class="topbar-breadcrumb">Overview <span>›</span> Home</div>
+      </div>
+      <div class="topbar-right">
+        <a href="courses.html" class="btn btn-primary btn-sm">📚 My Courses</a>
+      </div>
+    </header>
+
+    <div class="page-content">
+
+      <!-- Welcome Banner -->
+      <div class="welcome-banner" style="margin-bottom:var(--sp-md)">
+        <div class="welcome-text">
+          <h2>Welcome back, <span id="faculty-name">Faculty</span>! 👋</h2>
+          <p>Here's your OBE overview for Academic Year <span id="acad-year">2025-26</span></p>
+        </div>
+        <div>
+          <span class="welcome-badge" id="dept-badge">Loading...</span>
+        </div>
+      </div>
+
+      <!-- Vision & Mission -->
+      <div class="grid-2 mb-lg">
+        <div class="card" style="padding:16px">
+          <div style="font-weight:700;margin-bottom:8px;font-size:14px;color:var(--text-secondary)">🏛️ Institute Vision & Mission</div>
+          <div style="font-size:13px;margin-bottom:6px"><strong>Vision:</strong> <span id="inst-vision-text" style="font-style:italic"></span></div>
+          <div style="font-size:13px"><strong>Mission:</strong> <span id="inst-mission-text" style="font-style:italic"></span></div>
+        </div>
+        <div class="card" style="padding:16px">
+          <div style="font-weight:700;margin-bottom:8px;font-size:14px;color:var(--text-secondary)">🌟 Department Vision & Mission</div>
+          <div style="font-size:13px;margin-bottom:6px"><strong>Vision:</strong> <span id="dept-vision-text" style="font-style:italic"></span></div>
+          <div style="font-size:13px"><strong>Mission:</strong> <span id="dept-mission-text" style="font-style:italic"></span></div>
+        </div>
+      </div>
+
+      <div class="grid-4 mb-lg" id="stat-cards">
+        <div class="stat-card stat-card-primary">
+          <div class="stat-icon">📚</div>
+          <div class="stat-value" id="stat-courses">—</div>
+          <div class="stat-label">Total Courses</div>
+          <div class="stat-trend"><span style="color:var(--primary)">▶</span> <span style="color:var(--text-secondary)">This semester</span></div>
+        </div>
+        <div class="stat-card stat-card-success">
+          <div class="stat-icon">🎯</div>
+          <div class="stat-value" id="stat-co">—</div>
+          <div class="stat-label">Avg CO Attainment</div>
+          <div class="stat-trend" id="co-trend"><span>—</span></div>
+        </div>
+        <div class="stat-card stat-card-info">
+          <div class="stat-icon">📈</div>
+          <div class="stat-value" id="stat-po">—</div>
+          <div class="stat-label">Avg PO Attainment</div>
+          <div class="stat-trend" id="po-trend"><span>—</span></div>
+        </div>
+        <div class="stat-card stat-card-warning">
+          <div class="stat-icon">✅</div>
+          <div class="stat-value" id="stat-attained">—</div>
+          <div class="stat-label">COs Attained (≥ L2)</div>
+          <div class="stat-trend" id="att-trend"><span>—</span></div>
+        </div>
+      </div>
+
+      <!-- Smart Advisor Panel -->
+      <div class="card mb-lg" style="border: 1px solid rgba(139,92,246,0.3)">
+        <div class="card-header" style="background: linear-gradient(90deg, rgba(139,92,246,0.1) 0%, transparent 100%); border-bottom: 1px solid rgba(139,92,246,0.2);">
+          <div>
+            <div class="card-title" style="color: var(--primary); display:flex; align-items:center; gap:8px;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+              Smart OBE Advisor
+            </div>
+            <div class="card-subtitle">Automated health checks and suggestions for your courses</div>
+          </div>
+          <span class="badge badge-info" id="advisor-badge">Analyzing...</span>
+        </div>
+        <div id="advisor-list" style="padding: 16px; display:flex; flex-direction:column; gap:12px; max-height: 350px; overflow-y: auto;">
+           <div class="skeleton" style="height:60px; border-radius:8px;"></div>
+           <div class="skeleton" style="height:60px; border-radius:8px;"></div>
+        </div>
+      </div>
+
+      <!-- Charts Row -->
+      <div class="grid-2 mb-lg">
+        <!-- CO Attainment Bar Chart -->
+        <div class="chart-card">
+          <div class="chart-title">📊 CO Attainment by Course</div>
+          <div class="chart-sub">Final CO attainment levels across all your courses</div>
+          <canvas id="co-chart" height="220"></canvas>
+        </div>
+        <!-- PO Radar Chart -->
+        <div class="chart-card">
+          <div class="chart-title">🕸️ PO Attainment Radar</div>
+          <div class="chart-sub">Program Outcome coverage (averaged across courses)</div>
+          <canvas id="po-chart" height="220"></canvas>
+        </div>
+      </div>
+
+      <!-- Bottom Row: Course Summary + AI Meter -->
+      <div class="grid-2">
+        <!-- Course Summary -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">📚 My Courses</div>
+              <div class="card-subtitle">Quick access to course management</div>
+            </div>
+            <a href="courses.html" class="btn btn-secondary btn-sm">View All</a>
+          </div>
+          <div id="course-list" style="display:flex; flex-direction:column; gap:10px;">
+            <div class="skeleton" style="height:70px; border-radius:12px;"></div>
+            <div class="skeleton" style="height:70px; border-radius:12px;"></div>
+          </div>
+        </div>
+
+        <!-- Right column -->
+        <div style="display:flex;flex-direction:column;gap:var(--sp-lg);">
+          <!-- AI Usage Meter -->
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">🤖 AI Usage Meter</div>
+                <div class="card-subtitle">Assignment generation calls this month</div>
+              </div>
+              <span class="badge badge-info" id="ai-status-badge">Loading</span>
+            </div>
+            <div class="ai-meter" id="ai-meter">
+              <div style="display:flex; justify-content:space-between; font-size:13px;">
+                <span class="text-muted">Calls Used</span>
+                <span id="ai-calls-label" style="font-weight:700">— / —</span>
+              </div>
+              <div class="ai-meter-bar">
+                <div class="ai-meter-fill" id="ai-meter-fill" style="width:0%"></div>
+              </div>
+              <div style="font-size:12px; color:var(--text-muted)" id="ai-hint">AI features are loading…</div>
+            </div>
+          </div>
+
+          <!-- Attainment Summary Mini -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">📋 Attainment Summary</div>
+            </div>
+            <div id="att-summary" style="display:flex; flex-direction:column; gap:10px;">
+              <div class="skeleton" style="height:40px;border-radius:8px;"></div>
+              <div class="skeleton" style="height:40px;border-radius:8px;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /page-content -->
+  </main>
+</div>
+
+<div id="toast-container"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="../scripts/data.js?v=2"></script>`r`n<script src="../scripts/api.js"></script>
+<script src="../scripts/auth.js?v=2"></script>
+<script src="../scripts/attainment.js"></script>
+<script src="../scripts/advisor.js"></script>
+<script src="../scripts/utils.js"></script>
+<script>
+(async () => {
+  await (window._apiReady || Promise.resolve());
+  const user = Auth.requireAuth(['faculty', 'hod']);
+  if (!user) throw new Error('Not authorized');
+  Auth.populateSidebar(user);
+
+  let coChartInst = null, poChartInst = null;
+
+  // Scripts are at bottom of body so DOM is ready - run immediately
+  initPage();
+
+  function initPage() {
+    const courses = DB.courses.byFaculty(user.id);
+    const cfg     = DB.config.get();
+    const dept    = DB.departments.byId(user.deptId);
+
+    // Welcome & Vision/Mission
+    document.getElementById('faculty-name').textContent = user.name.split(' ')[0] || user.name;
+    document.getElementById('acad-year').textContent = cfg.academicYear || '2025-26';
+    document.getElementById('dept-badge').textContent = dept ? dept.name : 'Faculty';
+    document.getElementById('inst-vision-text').textContent = cfg.instituteVision || 'No institute vision defined yet.';
+    document.getElementById('inst-mission-text').textContent = cfg.instituteMission || 'No institute mission defined yet.';
+    document.getElementById('dept-vision-text').textContent = (dept && dept.vision) ? dept.vision : 'No department vision defined yet.';
+    document.getElementById('dept-mission-text').textContent = (dept && dept.mission) ? dept.mission : 'No department mission defined yet.';
+
+    // Build Smart Advisor UI
+    renderAdvisor(courses);
+
+    // Stats — animated counters
+    const stats = Attainment.getDashboardStats(user.id) || { totalCourses:0, avgCO:0, avgPO:0, attained:0 };
+    animateCounter(document.getElementById('stat-courses'), stats.totalCourses, 700);
+    if (stats.avgCO > 0) animateCounter(document.getElementById('stat-co'), stats.avgCO, 900, '', 1);
+    else document.getElementById('stat-co').textContent = '—';
+    if (stats.avgPO > 0) animateCounter(document.getElementById('stat-po'), stats.avgPO, 900, '', 2);
+    else document.getElementById('stat-po').textContent = '—';
+    animateCounter(document.getElementById('stat-attained'), stats.attained, 700);
+
+    // Trend labels
+    document.getElementById('co-trend').innerHTML = stats.avgCO >= 2
+      ? `<span style="color:var(--success)">▲</span> <span style="color:var(--success)">Good Attainment</span>`
+      : `<span style="color:var(--warning)">◆</span> <span style="color:var(--warning)">Needs Improvement</span>`;
+    document.getElementById('po-trend').innerHTML = `<span style="color:var(--info)">▶</span> <span style="color:var(--text-secondary)">Across PO1-PO11</span>`;
+    document.getElementById('att-trend').innerHTML = stats.attained > 0
+      ? `<span style="color:var(--success)">✓</span> <span style="color:var(--success)">${stats.attained} COs meeting target</span>`
+      : `<span style="color:var(--warning)">⚠</span> <span style="color:var(--warning)">Enter marks to track</span>`;
+
+    // AI Meter
+    const aiEnabled   = cfg.aiEnabled;
+    const aiUsed      = cfg.aiCallsUsed || 0;
+    const aiMax       = cfg.maxAICalls  || 50;
+    const aiPct       = Math.min((aiUsed / aiMax) * 100, 100);
+    document.getElementById('ai-calls-label').textContent = `${aiUsed} / ${aiMax}`;
+    document.getElementById('ai-status-badge').textContent = aiEnabled ? '🟢 Enabled' : '🔴 Disabled';
+    document.getElementById('ai-status-badge').className   = `badge ${aiEnabled ? 'badge-success' : 'badge-danger'}`;
+    document.getElementById('ai-hint').textContent = aiEnabled
+      ? `${aiMax - aiUsed} calls remaining — AI generation active`
+      : 'AI features are currently disabled by admin. Contact admin to enable.';
+    setTimeout(() => {
+      document.getElementById('ai-meter-fill').style.width = aiPct + '%';
+    }, 300);
+
+    // Course List
+    renderCourseList(courses);
+
+    // Charts
+    buildCOChart(courses);
+    buildPORadar(courses);
+
+    // Attainment Summary
+    renderAttSummary(courses);
+  }
+
+  function renderCourseList(courses) {
+    const el = document.getElementById('course-list');
+    if (!courses.length) {
+      el.innerHTML = `<div class="empty-state"><div class="empty-icon">📚</div><h3>No Courses Yet</h3><p>You have no courses assigned.</p><a href="courses.html" class="btn btn-primary btn-sm">Add Course</a></div>`;
+      return;
+    }
+    el.innerHTML = courses.map(c => {
+      const students = DB.students.byCourse(c.id).length;
+      const cos      = DB.cos.byCourse(c.id).filter(x => x.text);
+      return `
+        <div class="course-card-mini" onclick="selectCourse('${c.id}')">
+          <div class="course-mini-icon">${c.shortName ? c.shortName[0] : c.code[0]}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.name}</div>
+            <div style="font-size:12px;color:var(--text-secondary)">${c.code} · Sem ${c.semester} · ${students} students · ${cos.length} COs</div>
+            <div class="quick-links">
+              <a class="quick-link" href="outcomes.html" onclick="sessionStorage.setItem('selected_course_id','${c.id}')">COs</a>
+              <a class="quick-link" href="marks.html"    onclick="sessionStorage.setItem('selected_course_id','${c.id}')">Marks</a>
+              <a class="quick-link" href="attainment.html" onclick="sessionStorage.setItem('selected_course_id','${c.id}')">Attainment</a>
+              <a class="quick-link" href="co-po-map.html"  onclick="sessionStorage.setItem('selected_course_id','${c.id}')">CO-PO Map</a>
+            </div>
+          </div>
+          <span class="badge ${c.status === 'active' ? 'badge-success' : 'badge-muted'}">${c.status || 'active'}</span>
+        </div>`;
+    }).join('');
+  }
+
+  function selectCourse(cid) {
+    sessionStorage.setItem('selected_course_id', cid);
+  }
+
+  function buildCOChart(courses) {
+    // Gather all COs across courses
+    let allLabels = [];
+    let allData   = [];
+    let allColors = [];
+    let allBorders = [];
+
+    courses.forEach(c => {
+      const finals = Attainment.calcCOFinal(c.id);
+      finals.forEach(co => {
+        allLabels.push(`${c.shortName||c.code} / ${co.coCode}`);
+        allData.push(co.finalLevel !== null ? co.finalLevel : 0);
+        if (co.finalLevel >= 2) { allColors.push('rgba(5,150,105,0.75)');  allBorders.push('#059669'); }
+        else if (co.finalLevel === 1) { allColors.push('rgba(217,119,6,0.75)'); allBorders.push('#D97706'); }
+        else { allColors.push('rgba(220,38,38,0.55)'); allBorders.push('#DC2626'); }
+      });
+    });
+
+    const ctx = document.getElementById('co-chart').getContext('2d');
+    if (coChartInst) coChartInst.destroy();
+    coChartInst = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: allLabels.length ? allLabels : ['No Data'],
+        datasets: [{
+          label: 'CO Attainment Level',
+          data: allData.length ? allData : [0],
+          backgroundColor: allColors.length ? allColors : ['rgba(37,99,235,0.3)'],
+          borderColor: allBorders,
+          borderWidth: 1.5,
+          borderRadius: 8,
+          borderSkipped: false,
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: true,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#0F172A', titleColor: '#F8FAFC', bodyColor: '#CBD5E1',
+            padding: 10, cornerRadius: 8,
+            callbacks: { label: ctx => `Level ${ctx.raw} / 3` }
+          }
+        },
+        scales: {
+          y: {
+            min: 0, max: 3,
+            ticks: { color: '#64748B', stepSize: 1, callback: v => `L${v}` },
+            grid: { color: 'rgba(0,0,0,0.05)', drawBorder: false }
+          },
+          x: {
+            ticks: { color: '#64748B', font: { size: 10 }, maxRotation: 45 },
+            grid: { display: false }
+          }
+        }
+      }
+    });
+  }
+
+  function buildPORadar(courses) {
+    const poList = ['PO1','PO2','PO3','PO4','PO5','PO6','PO7','PO8','PO9','PO10','PO11'];
+    const avgPO  = {};
+    poList.forEach(po => avgPO[po] = []);
+
+    courses.forEach(c => {
+      const poData = Attainment.calcPOAttainment(c.id);
+      poList.forEach(po => {
+        if (poData[po] && poData[po].rawScore !== null) avgPO[po].push(poData[po].rawScore);
+      });
+    });
+
+    const data = poList.map(po => {
+      const vals = avgPO[po];
+      return vals.length ? vals.reduce((a,b) => a+b, 0) / vals.length : 0;
+    });
+
+    const ctx = document.getElementById('po-chart').getContext('2d');
+    if (poChartInst) poChartInst.destroy();
+    poChartInst = new Chart(ctx, {
+      type: 'radar',
+      data: {
+        labels: poList,
+        datasets: [{
+          label: 'PO Attainment',
+          data,
+          backgroundColor: 'rgba(37,99,235,0.1)',
+          borderColor: '#2563EB',
+          pointBackgroundColor: '#2563EB',
+          pointBorderColor: '#fff',
+          pointHoverBackgroundColor: '#fff',
+          pointHoverBorderColor: '#2563EB',
+          borderWidth: 2.5,
+          pointRadius: 5,
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: true,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#0F172A', titleColor: '#F8FAFC', bodyColor: '#CBD5E1',
+            padding: 10, cornerRadius: 8,
+            callbacks: { label: ctx => `PO Score: ${ctx.raw.toFixed ? ctx.raw.toFixed(2) : ctx.raw} / 3` }
+          }
+        },
+        scales: {
+          r: {
+            min: 0, max: 3,
+            ticks: { stepSize: 1, color: '#64748B', backdropColor: '#F8FAFC', font: { size: 10 } },
+            grid: { color: 'rgba(0,0,0,0.08)' },
+            pointLabels: { color: '#475569', font: { size: 11, weight: '700' } },
+            angleLines: { color: 'rgba(0,0,0,0.07)' }
+          }
+        }
+      }
+    });
+  }
+
+  function renderAttSummary(courses) {
+    const el = document.getElementById('att-summary');
+    if (!courses.length) { el.innerHTML = `<p class="text-muted text-sm">No courses to summarize.</p>`; return; }
+    let html = '';
+    courses.forEach(c => {
+      const finals = Attainment.calcCOFinal(c.id);
+      const attained = finals.filter(x => x.finalLevel >= 2).length;
+      const total    = finals.filter(x => x.finalLevel !== null).length;
+      const pct      = total > 0 ? Math.round((attained / total) * 100) : 0;
+      const color    = pct >= 75 ? 'var(--success)' : pct >= 50 ? 'var(--warning)' : 'var(--danger)';
+      html += `
+        <div>
+          <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;">
+            <span style="font-weight:600">${c.shortName || c.code}</span>
+            <span style="color:${color};font-weight:700">${attained}/${total} COs ≥ L2</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill ${pct >= 75 ? 'success' : pct >= 50 ? 'warning' : 'danger'}" style="width:${pct}%"></div>
+          </div>
+        </div>`;
+    });
+    el.innerHTML = html;
+  }
+  function renderAdvisor(courses) {
+    const listEl = document.getElementById('advisor-list');
+    const badgeEl = document.getElementById('advisor-badge');
+    
+    // Use Advisor engine globally
+    const issues = window.Advisor ? Advisor.getGlobalDiagnostics(user.id) : [];
+    
+    listEl.innerHTML = '';
+    
+    if (issues.length === 0) {
+      badgeEl.textContent = '0 Issues';
+      badgeEl.className = 'badge badge-success';
+      listEl.innerHTML = `
+        <div style="text-align:center; padding:24px; color:var(--text-muted);">
+          <div style="font-size:32px; margin-bottom:8px;">✅</div>
+          <div style="font-weight:600; color:var(--success);">All Good!</div>
+          <div style="font-size:12px; margin-top:4px;">No configuration issues or missing data found for your courses.</div>
+        </div>
+      `;
+      return;
+    }
+
+    badgeEl.textContent = `${issues.length} Suggestion${issues.length>1?'s':''}`;
+    badgeEl.className = 'badge badge-warning';
+
+    issues.forEach(iss => {
+      const isError = iss.type === 'error';
+      const isWarn = iss.type === 'warning';
+      const color = isError ? 'var(--danger)' : (isWarn ? 'var(--warning)' : 'var(--info)');
+      const bg = isError ? 'rgba(239,68,68,0.1)' : (isWarn ? 'rgba(245,158,11,0.1)' : 'rgba(59,130,246,0.1)');
+      const icon = isError ? '❌' : (isWarn ? '⚠️' : '💡');
+
+      const el = document.createElement('div');
+      el.style.cssText = `
+        display:flex; justify-content:space-between; align-items:flex-start;
+        padding: 12px; border-radius: 8px; background: ${bg}; border-left: 3px solid ${color};
+        gap: 12px;
+      `;
+      
+      const coursePrefix = iss.course ? `<span style="font-size:10px; font-weight:700; background:rgba(255,255,255,0.15); padding:2px 6px; border-radius:4px; margin-right:6px;">${iss.course.code}</span>` : '';
+
+      el.innerHTML = `
+        <div style="display:flex; gap:12px; flex:1;">
+          <div style="font-size:16px; margin-top:2px;">${icon}</div>
+          <div>
+            <div style="font-weight:600; font-size:14px; margin-bottom:4px; color:${color}; display:flex; align-items:center;">
+              ${coursePrefix} ${iss.title}
+            </div>
+            <div style="font-size:12px; color:var(--text-secondary); line-height:1.4;">
+              ${iss.description}
+            </div>
+          </div>
+        </div>
+        <a href="${iss.actionUrl}" class="btn btn-sm" style="background:transparent; border:1px solid ${color}; color:${color}; font-size:11px; padding:4px 10px; white-space:nowrap; flex-shrink:0;" onclick="sessionStorage.setItem('selected_course_id', '${iss.course?iss.course.id:''}')">
+          ${iss.actionText}
+        </a>
+      `;
+      listEl.appendChild(el);
+    });
+  }
+
+})();
+</script>
+<script src="../scripts/ai-chat.js"></script>\n</body>
+</html>

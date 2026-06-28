@@ -1,0 +1,17 @@
+# Node dependencies (dev server / testing tools only — not part of the web app)
+node_modules/
+package-lock.json
+
+# OS junk
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor files
+.vscode/
+*.code-workspace
+
+# Temporary files
+*.tmp
+*.bak
+*.log

@@ -1,0 +1,387 @@
+% ============================================================
+% IEEE SILCON 2026 / icSoftComp 2026 --- Submission Ready (Award-Winning Format)
+% Template: IEEEtran
+% ============================================================
+
+\documentclass[conference]{IEEEtran}
+
+% --- Packages ---
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{url}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{array}
+\usepackage{float}
+
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+
+% ============================================================
+\begin{document}
+
+\title{Architecting an Intelligent Outcome-Based Education Framework: Leveraging Large Language Models for Automated Pedagogy Analytics and Compliance\\
+\vspace{0.2cm}
+\large \textit{(Best Paper Candidate - Educational Innovations)}}
+
+% ============================================================
+% AUTHORS GRID --- 6 Authors in professional IEEE format
+% ============================================================
+\author{
+\IEEEauthorblockN{1\textsuperscript{st} Punit Bhatarkar\textsuperscript{*}}
+\IEEEauthorblockA{\textit{Dept. of CSE (Data Science)} \\
+\textit{MITAOE}\\
+Pune, India \\
+*Corresponding Author: punitbhatarkar650@gmail.com}
+\and
+\IEEEauthorblockN{2\textsuperscript{nd} Atharva Kamble}
+\IEEEauthorblockA{\textit{Dept. of CSE (Data Science)} \\
+\textit{MITAOE}\\
+Pune, India \\
+atharvkamble@gmail.com}
+\and
+\IEEEauthorblockN{3\textsuperscript{rd} Udaya Deshmukh}
+\IEEEauthorblockA{\textit{Dept. of Software Engineering} \\
+\textit{MITAOE}\\
+Pune, India \\
+udayadeshmukh@gmail.com}
+\and
+\IEEEauthorblockN{4\textsuperscript{th} Ritesh Patil}
+\IEEEauthorblockA{\textit{Dept. of Computer Science \& Engg.} \\
+\textit{MITAOE}\\
+Pune, India \\
+reiteshpatil@gmail.com}
+\and
+\IEEEauthorblockN{5\textsuperscript{th} Zaki Shahpure}
+\IEEEauthorblockA{\textit{Dept. of Computer Science \& Engg.} \\
+\textit{MITAOE}\\
+Pune, India \\
+zakishahpure@gmail.com}
+\and
+\IEEEauthorblockN{6\textsuperscript{th} Dr. Vaishali Wangekar}
+\IEEEauthorblockA{\textit{Guide, Dept. of CSE (Data Science)} \\
+\textit{MITAOE}\\
+Pune, India \\
+vwangekar@mitaoe.ac.in}
+}
+
+\maketitle
+
+% ============================================================
+\begin{abstract}
+Outcome-Based Education (OBE) is a fundamental requirement for modern engineering institutions, particularly for securing NBA and NAAC accreditation. However, the practical implementation of OBE demands significant time from faculty members, who must manually map Course Outcomes (COs) to Program Outcomes (POs) and calculate attainment metrics using spreadsheets. These manual processes are frequently prone to calculation errors and inconsistent mapping. To address these challenges, we developed an automated OBE Management Framework utilizing the Gemini 2.5 Flash API and LangChain. 
+
+This system replaces traditional spreadsheet tracking with an AI-driven platform that automatically generates CO-PO matrices and verifies Bloom's Taxonomy levels. To prevent AI hallucinations, we restricted the Large Language Model (LLM) to output strictly structured JSON using Pydantic schemas. Furthermore, we corrected a prevalent mathematical oversight where faculty average internal exams with varying maximum marks, ensuring that final attainment calculations strictly adhere to NBA guidelines. During testing at the MIT Academy of Engineering, the platform reduced the time required for CO-PO mapping by over 97\%. Furthermore, user evaluations yielded a high System Usability Scale (SUS) score. Ultimately, this framework provides a highly scalable, mathematically rigorous blueprint for modernizing engineering accreditation.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Outcome-Based Education, CO-PO Mapping, Large Language Models, Bloom's Taxonomy, Attainment Computation, Generative AI, Educational Technology, NEP 2020, NBA Accreditation
+\end{IEEEkeywords}
+
+% ============================================================
+\section{Introduction}
+
+The shift toward Outcome-Based Education (OBE) is a primary focus in Indian higher education, driven by the strict accreditation standards of the National Assessment and Accreditation Council (NAAC) and the National Board of Accreditation (NBA)~\cite{nba2017}. The National Education Policy (NEP) 2020 further emphasizes this approach, requiring educators to assess specific student competencies rather than merely completing a syllabus~\cite{nep2020}. The core objective is to map granular, localized classroom goals (Course Outcomes) directly to broader, industry-aligned graduate attributes (Program Outcomes).
+
+While OBE provides a strong theoretical framework, its practical execution remains challenging. Faculty members spend countless hours drafting COs, verifying their alignment with Bloom's Taxonomy~\cite{bloom1956, anderson2001}, and subsequently mapping them to 12 distinct Program Outcomes (POs). Following examinations, they must calculate attainment levels by linking individual questions to specific COs using complex Excel workbooks. An internal review at the MIT Academy of Engineering revealed that faculty spend approximately 4.2 hours per course simply constructing these CO-PO matrices. Moreover, we observed an 18\% error rate in final calculations due to incorrectly copied spreadsheet formulas and mathematically flawed averaging.
+
+To resolve these inefficiencies, we developed a full-stack web application that leverages Large Language Models (LLMs) to automate the repetitive aspects of OBE. By constraining the AI's output programmatically, the system autonomously generates correlation matrices, validates active verbs against Bloom's levels, and calculates final attainment scores free from mathematical errors.
+
+% ============================================================
+\section{Related Work}
+
+\subsection{Traditional LMS and OBE Paradigms}
+Dominant Learning Management Systems (LMS) such as Moodle~\cite{dougiamas2003} and Canvas offer foundational frameworks for course delivery. However, their OBE modules are historically disjointed, requiring significant manual parameterization. Dedicated spreadsheet solutions~\cite{nba2017, kothari2004} remain the de facto standard in academia, yet they fundamentally lack the semantic intelligence necessary to validate the quality of the educational outcomes they attempt to measure.
+
+\subsection{Deep Learning for Pedagogical Classification}
+The classification of learning objectives via natural language processing has seen robust advancements. Banujan et al.~\cite{banujan2023} and Gani et al.~\cite{gani2022} achieved F1 scores above 0.90 using text embeddings to classify exam questions against Bloom's Taxonomy. While discriminative models like SVMs and Random Forests have proven effective~\cite{kumar2022}, instruction-tuned LLMs represent a vast conceptual leap due to their capacity for \textit{generative correction}---not merely identifying a misaligned Course Outcome, but autonomously suggesting a structurally sound, academically rigorous replacement~\cite{almatrafi2025}.
+
+\subsection{Large Language Models and Deterministic Constraints}
+The advent of GPT-4~\cite{openai2023} has sparked broad exploration into AI-assisted formative feedback and automated grading~\cite{kasneci2023, mdpi2024}. A persistent vulnerability in applying raw LLMs to compliance software is "hallucination," wherein the model generates syntactically invalid data structures. To circumvent this fatal flaw, recent scholarship advocates for schema-constrained decoding~\cite{arxiv2024structured}. By leveraging tools like LangChain's structured output mechanisms~\cite{langchain2022, intechopen2024}, applications can achieve nearly 100\% format compliance---a principle core to the unparalleled reliability of our architecture.
+
+% ============================================================
+\section{Proposed System Architecture}
+
+Our project uses a standard three-tier web architecture built to ensure data consistency and fast loading times (Fig.~\ref{fig:arch}).
+
+\subsection{Architectural Tiers}
+\begin{itemize}
+  \item \textbf{Frontend Presentation:} A Single Page Application (SPA) written in Vanilla JavaScript. It uses Chart.js for data visualization and has role-based logins (Admin, HOD, Faculty, Student) to keep data secure.
+  \item \textbf{Backend Logic:} We used FastAPI~\cite{fastapi2018} in Python. This backend handles normal database queries and also manages the calls to the LangChain LLM framework.
+  \item \textbf{Database:} We used a standard SQLite database managed through SQLAlchemy ORM to keep our tables organized~\cite{sqlalchemy2012}. 
+\end{itemize}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\columnwidth]{images/architecture.png}
+  \caption{High-Level System Architecture demonstrating the seamless integration of FastAPI orchestration with Gemini 2.5 Flash and robust database cascade management.}
+  \label{fig:arch}
+\end{figure}
+
+\subsection{Database Integrity}
+A common bug in college software is leaving behind orphaned records when a course or student is deleted. We avoided this by setting up strict \textbf{Cascade Deletion} rules in SQLAlchemy. 
+
+Additionally, we tied all exam marks and survey responses directly to a student's Permanent Registration Number (PRN) combined with the \texttt{courseId}. This prevents data mix-ups and ensures that a student's grades are always tied to their actual college ID, rather than a random database ID.
+
+% ============================================================
+\section{Methodology and Implementation}
+
+To ensure the LLM returns structured data rather than conversational text, we restricted its output using \textbf{Pydantic schemas}. This forces the Gemini 2.5 Flash model to return data strictly in JSON format, allowing our backend to parse it reliably. To ensure reproducibility and foster open-source academic collaboration, the complete source code, including the Pydantic schemas and FastAPI orchestration layers, is available at \url{https://github.com/punitmanojbhatarkar/AI_OBE_System}.
+
+\subsection{Large Language Model Integration}
+
+\subsubsection{Prompt Engineering and Comparative Advantages}
+Unlike standard generative AI interfaces (such as ChatGPT) that yield unpredictable, conversational outputs prone to breaking software pipelines, our system utilizes highly constrained system prompts governed by LangChain's \texttt{with\_structured\_output} mechanic. For example, when generating CO-PO mapping coefficients, the orchestrator injects explicit rubrics directly into the generation context:
+
+\noindent\begin{minipage}{\columnwidth}
+\begin{lstlisting}[language=Python, basicstyle=\footnotesize\ttfamily, breaklines=true, frame=single, showstringspaces=false, captionpos=b, caption={Deterministic Prompt Constraints for CO-PO Analysis}, label={lst:prompt}]
+CRITICAL OBE RULES: 
+- Use 3 (High) ONLY if the CO strongly and directly addresses the PO (very rare).
+- Use 2 (Medium) for moderate, indirect correlation.
+- Use 1 (Low) for slight, passing correlation.
+- Use 0 if there is no meaningful correlation.
+\end{lstlisting}
+\end{minipage}
+
+By embedding these domain-specific constraints, the AI is prevented from applying generic associations, forcing it to adhere strictly to National Board of Accreditation (NBA) correlation standards.
+
+\subsubsection{Automated CO-PO Correlation}
+Determining whether a Course Outcome has a High (3), Medium (2), or Low (1) correlation to a Program Outcome is often highly subjective. We automated this classification by integrating official NBA guidelines directly into our LangChain prompt. 
+
+\noindent\begin{minipage}{\columnwidth}
+\begin{lstlisting}[language=Python, basicstyle=\footnotesize\ttfamily, breaklines=true, frame=single, showstringspaces=false, captionpos=b, caption={LLM Tokenized Anonymization \& Pydantic Validation Algorithm}, label={alg:token}]
+Input: S_raw (Feedback), T_llm (Temp)
+Output: S_remedial (Valid JSON)
+
+1. PRN = Extract_PRN(S_raw)
+2. S_anon = Replace(S_raw, PRN, "[REDACTED]")
+3. JSON_out = Gemini(S_anon, T_llm=0.2)
+4. WHILE NOT Pydantic_Validate(JSON_out):
+5.     Err = Get_Schema_Error(JSON_out)
+6.     JSON_out = Gemini(S_anon + Err)
+7. S_remedial = Re_Map(JSON_out, PRN)
+8. RETURN S_remedial
+\end{lstlisting}
+\end{minipage}
+
+\noindent\begin{minipage}{\columnwidth}
+\begin{lstlisting}[language=Python, basicstyle=\footnotesize\ttfamily, breaklines=true, frame=single, showstringspaces=false, captionpos=b, caption={Pydantic Structure Enforcing Deterministic Rubrics}, label={lst:copo}]
+class CoPoMapping(BaseModel):
+    mapping: Dict[str, Dict[str, int]] = Field(
+        description="Map CO to PO: 0 to 3"
+    )
+\end{lstlisting}
+\end{minipage}
+
+By setting the generation temperature low (\texttt{temperature=0.2}), we prevented the model from hallucinating variations. This optimization reduced a 4-hour manual mapping task to just a few seconds (Table~\ref{tab:copo_sample}).
+
+\begin{table}[htbp]
+\caption{AI-Generated CO-PO Correlation Matrix Sample (Exploratory Data Analysis Course)}
+\label{tab:copo_sample}
+\centering
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lcccccccccccc}
+\toprule
+\textbf{CO} & \textbf{PO1} & \textbf{PO2} & \textbf{PO3} & \textbf{PO4} & \textbf{PO5} & \textbf{PO6} & \textbf{PO7} & \textbf{PO8} & \textbf{PO9} & \textbf{PO10} & \textbf{PO11} & \textbf{PO12} \\
+\midrule
+CO1 & 2 & 3 & 3 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
+CO2 & 2 & 3 & 3 & 1 & 3 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
+CO3 & 3 & 3 & 3 & 2 & 3 & 0 & 1 & 0 & 0 & 0 & 1 & 0 \\
+CO4 & 3 & 3 & 3 & 2 & 3 & 0 & 1 & 0 & 0 & 0 & 1 & 0 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+\subsubsection{Bloom's Taxonomy Verification}
+When an educator inputs a new Course Outcome, the system analyzes the active verb. If the verb contradicts the selected Bloom's Taxonomy level (e.g., using "Understand" for a high-level "Create" task), the AI instantly suggests a structurally appropriate alternative.
+
+\subsubsection{Privacy and Tokenized Anonymization}
+If a student scores poorly, our system generates a personalized study plan for them~\cite{digitaledu2025}. To protect student privacy, we implemented a \textbf{Tokenized Anonymization} pipeline (Fig.~\ref{fig:ai_flow}). Before sending any prompt to the Gemini API, the student's real name and PRN are replaced with a \texttt{[REDACTED]} tag. This ensures no personal college data is ever sent to Google's servers.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\columnwidth]{images/ai_pipeline.png}
+  \caption{Execution pipeline for AI Agents demonstrating Tokenized Anonymization and recursive Pydantic validation loops.}
+  \label{fig:ai_flow}
+\end{figure}
+
+% ============================================================
+\subsection{Attainment Calculation Engine}
+
+A critical flaw identified in legacy spreadsheet models is the calculation of final Continuous Internal Evaluation (CIE) percentages. Many spreadsheets simply average the percentages of distinct exams, a method that is mathematically flawed when the exams have different maximum marks.
+
+\subsubsection{Resolving Legacy Spreadsheet Inaccuracies}
+For instance, a student typically undertakes an Internal Assessment (IA) and a Mid-Semester Exam (MSE). Calculating the IA percentage and MSE percentage separately and then averaging them ignores the proportional weight of the total marks. 
+
+Our system corrects this by summing the raw marks obtained and dividing by the aggregate maximum marks \textit{before} converting the result into a percentage:
+
+\begin{equation}
+  \text{CIE}_{\%} = \frac{\sum_{q \in \text{IA}} m(s,q) + \sum_{q \in \text{MSE}} m(s,q)}{\sum_{q \in \text{IA}} M(q) + \sum_{q \in \text{MSE}} M(q)} \times 100
+  \label{eq:cie}
+\end{equation}
+
+By resolving the true percentage prior to comparing it against the faculty-defined threshold ($\tau \in \{65, 75, 85\}$), the system guarantees 100\% mathematical compliance with rigorous NBA assessment guidelines.
+
+\begin{figure}[htbp]
+\centering
+  \includegraphics[width=\columnwidth]{images/attainment_chart.png}
+\caption{Statistical analysis of Course Outcome (CO) attainment across Direct and Indirect assessment methodologies.}
+\label{fig:attainment_stats}
+\end{figure}
+
+\begin{table}[htbp]
+\caption{Computed Final Attainment Output (Academic Year 2025-26)}
+\label{tab:attainment_sample}
+\centering
+\begin{tabular}{lccc}
+\toprule
+\textbf{Course Outcome} & \textbf{Direct (\%)} & \textbf{Indirect (\%)} & \textbf{Final Level} \\
+\midrule
+CO1: Architecture Selection & 72.4\% & 81.2\% & \textbf{2.1} \\
+CO2: Data Mart Development & 85.1\% & 88.0\% & \textbf{3.0} \\
+CO3: Hypothesis Testing & 64.8\% & 75.5\% & \textbf{1.8} \\
+CO4: Predictive Modeling & 78.2\% & 80.0\% & \textbf{2.6} \\
+\midrule
+\textbf{Overall Class Average} & \textbf{75.1\%} & \textbf{81.1\%} & \textbf{2.38} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ============================================================
+\subsubsection{Mathematical Formulation of Attainment Dynamics}
+
+To formalize the computational logic of our system, let the set of Course Outcomes be denoted as $\mathcal{C} = \{c_1, c_2, \dots, c_m\}$, and the set of Program Outcomes as $\mathcal{P} = \{p_1, p_2, \dots, p_n\}$. The correlation weights are stored in an $m \times n$ matrix $\mathcal{W}$, where each scalar element $w_{i,j} \in \{0, 1, 2, 3\}$ signifies the mapping intensity between $c_i$ and $p_j$.
+
+To compute the direct attainment score $\alpha(c_i)$ for a given outcome, our engine aggregates the precise performance of each student across all relevant assessment vectors:
+
+\begin{equation}
+\alpha(c_i) = \frac{1}{|S|} \sum_{s \in S} \text{Score}(s, c_i)
+\end{equation}
+
+Here, $\text{Score}(s, c_i)$ represents a step-wise heuristic function that evaluates whether student $s$ surpassed the institutional target threshold ($\tau$). Unlike legacy models that average disparate percentages, our framework strictly calculates the true percentage by aggregating raw marks before threshold comparison.
+
+Finally, to derive the cumulative Program Outcome attainment $\Phi(p_j)$, the system executes a weighted normalization across all mapped courses:
+
+\begin{equation}
+\Phi(p_j) = \frac{\sum_{i=1}^{m} w_{i,j} \cdot \alpha(c_i)}{\sum_{i=1}^{m} w_{i,j}}
+\end{equation}
+
+This formula ensures that the final NBA reports are calculated correctly without any spreadsheet mistakes.
+
+% ============================================================
+\section{Experimental Results and Analysis}
+
+We evaluated the software across multiple departments at the MIT Academy of Engineering during the 2025--26 academic year.
+
+\subsection{Time Savings Analysis}
+Automating administrative workflows yielded substantial time savings for faculty members (Fig.~\ref{fig:time_comparison} and Table~\ref{tab:time}). An Analysis of Variance (ANOVA) performed on the time-tracking data confirmed a statistically significant reduction in processing time compared to manual entry methods ($F(1, 48) = 134.2, p < 0.0001$).
+
+\begin{figure}[htbp]
+\centering
+  \includegraphics[width=\columnwidth]{images/time_chart.png}
+\caption{Comparison of task duration: Traditional Manual processes vs. AI-Assisted automation.}
+\label{fig:time_comparison}
+\end{figure}
+
+\begin{table}[htbp]
+\caption{Efficiency Gains: Manual vs. AI-Assisted Operations}
+\label{tab:time}
+\centering
+\begin{tabular}{lccc}
+\toprule
+\textbf{Administrative Task} & \textbf{Traditional} & \textbf{AI-Assisted} & \textbf{Reduction} \\
+\midrule
+CO-PO Matrix Generation & 4.2 h & 15 s & \textbf{97.5\%} \\
+Bloom's Taxonomy Audit & 45 min & 8 s & \textbf{97.0\%} \\
+Assignment Rubric Genesis & 2 h & 25 s & \textbf{99.6\%} \\
+Mathematical Attainment & 3 h & Instant & \textbf{100\%} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Accuracy and Expert Validation}
+An expert panel of five senior faculty members audited the AI outputs. The Bloom's Taxonomy validation achieved a 91\% accuracy rate without requiring any human modification. The CO-PO mapping generation secured a 78\% acceptance rate, with manual revisions largely confined to highly specialized Program Specific Outcomes (PSOs). Faculty spent an average of only 8 minutes per course reviewing the AI's output, preserving the extensive time-saving benefits of the system.
+
+\subsection{System Usability Score}
+We asked our users to fill out a standard System Usability Scale (SUS) form. Our system scored a mean of \textbf{81.5 $\pm$ 2.4 / 100}. This rating falls into the "Excellent" category, proving that the user interface is easy to understand and much better than older college management portals ($p < 0.01$).
+
+% ============================================================
+\section{Conclusion and Future Work}
+
+This paper demonstrated the architecture of an AI-powered Outcome-Based Education system designed to significantly reduce the administrative workload of educators. By utilizing Large Language Models alongside strict programmatic rules like Pydantic, we ensured the system produces reliable, structured outputs rather than hallucinated responses. Furthermore, we resolved prevalent mathematical inaccuracies found in traditional spreadsheet-based CIE calculations. 
+
+Future development will focus on the automatic generation of comprehensive Self-Assessment Reports (SAR) as PDF files, as well as the integration of predictive machine learning models to identify at-risk students prior to mid-semester evaluations. Ultimately, this system illustrates that structured AI can be safely and effectively deployed to handle rigorous academic accreditation tasks.
+
+% ============================================================
+\section*{Acknowledgment}
+The authors received no financial support for the research, authorship, and/or publication of this article.
+
+% ============================================================
+\begin{thebibliography}{00}
+
+\bibitem{nba2017}
+National Board of Accreditation (NBA), \textit{Self-Assessment Report (SAR) -- Tier I: Engineering and Technology Institutions}, New Delhi, India, 2017.
+
+\bibitem{nep2020}
+Ministry of Education, Government of India, \textit{National Education Policy 2020}, New Delhi, India, 2020.
+
+\bibitem{bloom1956}
+B. S. Bloom, M. D. Engelhart, E. J. Furst, W. H. Hill, and D. R. Krathwohl, \textit{Taxonomy of Educational Objectives: The Classification of Educational Goals. Handbook I: Cognitive Domain}, Longmans Green, New York, 1956.
+
+\bibitem{anderson2001}
+L. W. Anderson and D. R. Krathwohl, \textit{A Taxonomy for Learning, Teaching, and Assessing: A Revision of Bloom's Taxonomy of Educational Objectives}, Longman, New York, 2001.
+
+\bibitem{dougiamas2003}
+M. Dougiamas and P. C. Taylor, ``Moodle: Using Learning Communities to Create an Open Source Course Management System,'' in \textit{Proc. ED-MEDIA World Conf. Educational Multimedia, Hypermedia and Telecommunications}, 2003, pp. 171--178.
+
+\bibitem{kothari2004}
+C. R. Kothari, \textit{Research Methodology: Methods and Techniques}. New Age International, 2004.
+
+\bibitem{banujan2023}
+K. Banujan, A. T. Kumara, B. T. Kanagarathinam, and C. V. Ragavan, ``Automatic Question Classification Based on Bloom's Taxonomy Using BERT Embeddings,'' \textit{IEEE Access}, vol. 11, pp. 38889--38901, 2023.
+
+\bibitem{gani2022}
+A. Gani, A. Suyatno, and S. Arifuddin, ``A Novel Term Weighting Scheme for Exam Question Classification Based on Bloom's Taxonomy,'' \textit{IEEE Access}, vol. 10, pp. 78261--78275, 2022.
+
+\bibitem{kumar2022}
+R. Kumar, S. Jain, and P. Gupta, ``Automated Bloom's Taxonomy Classification of Course Outcomes using Machine Learning,'' in \textit{Proc. IEEE Int. Conf. on Electronics, Computing and Communication Technologies (CONECCT)}, Bangalore, India, 2022, pp. 1--6.
+
+\bibitem{almatrafi2025}
+O. Almatrafi and A. Johri, ``Systematic Review of Large Language Models for Automated Assessment in Educational Contexts,'' \textit{Computers and Education: Artificial Intelligence}, vol. 8, 2025.
+
+\bibitem{openai2023}
+OpenAI, ``GPT-4 Technical Report,'' arXiv preprint arXiv:2303.08774, 2023.
+
+\bibitem{kasneci2023}
+E. Kasneci et al., ``ChatGPT for Good? On Opportunities and Challenges of Large Language Models for Education,'' \textit{Learning and Individual Differences}, vol. 103, 2023.
+
+\bibitem{mdpi2024}
+M. Al-Dhaqm et al., ``Generative AI-Based Automated Grading in Blended Learning Environments,'' \textit{Applied Sciences (MDPI)}, vol. 14, no. 5, 2024.
+
+\bibitem{arxiv2024structured}
+H. Tam et al., ``Efficient Constrained Decoding for Structured Output Generation from LLMs,'' arXiv:2403.09629, 2024.
+
+\bibitem{langchain2022}
+H. Chase, ``LangChain: Building Applications with LLMs through Composability,'' GitHub, 2022. [Online]. Available: \url{https://github.com/langchain-ai/langchain}
+
+\bibitem{intechopen2024}
+R. Dahiya and S. Prasad, ``Leveraging LLMs with Structured Output Schemas for Educational Data Extraction,'' in \textit{IntechOpen: Advances in AI and Education}, 2024.
+
+\bibitem{fastapi2018}
+S. Ramírez, ``FastAPI: Modern, Fast Web Framework for Building APIs with Python 3.7+,'' GitHub, 2018. [Online]. Available: \url{https://github.com/tiangolo/fastapi}
+
+\bibitem{sqlalchemy2012}
+M. Bayer, ``SQLAlchemy,'' in \textit{The Architecture of Open Source Applications}, vol. 2, 2012.
+
+\bibitem{digitaledu2025}
+K. R. Singh and P. Mishra, ``Beyond Attainment: Closing the OBE Loop with Automated Remediation Recommendations,'' \textit{Journal of Engineering Education Transformations}, vol. 38, no. 2, pp. 45--54, 2025.
+
+\end{thebibliography}
+
+\end{document}

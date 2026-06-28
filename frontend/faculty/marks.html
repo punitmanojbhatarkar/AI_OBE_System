@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Marks Entry | OBE System – MITAOE</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../styles/main.css?v=6">
+  <link rel="stylesheet" href="../styles/components.css?v=6">
+  <style>
+    .survey-input{width:48px;text-align:center;padding:6px;background:var(--surface);border:1.5px solid var(--border);border-radius:6px;color:var(--text-primary);font-size:14px;font-weight:700;outline:none;font-family:inherit;transition:all var(--t-fast);}
+    .survey-input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,0.12);}
+  </style>
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-logo"><div class="logo-icon">OBE</div><div><div class="logo-text">OBE System</div><div class="logo-sub">MITAOE</div></div></div>
+    <nav class="sidebar-nav">
+      <p class="nav-section-label">Overview</p>
+      <a class="nav-item" href="dashboard.html">📊 Dashboard</a>
+      <a class="nav-item" href="courses.html">📚 My Courses</a>
+      <p class="nav-section-label">Course Management</p>
+      <a class="nav-item" href="syllabus.html">📖 Syllabus Setup</a>
+      <a class="nav-item" href="outcomes.html">🎯 CO & PO Setup</a>
+      <a class="nav-item" href="co-po-map.html">🗺️ CO-PO Mapping</a>
+      <a class="nav-item" href="6a-matrix.html">📋 6A Indicator Mapping</a>
+      <a class="nav-item" href="students.html">👥 Students</a>
+      <p class="nav-section-label">Assessment</p>
+      <a class="nav-item" href="marks.html">📝 Marks Entry</a>
+      <a class="nav-item" href="attainment.html">📈 Attainment</a>
+      <a class="nav-item" href="assignments.html">🤖 Assignments & AI</a>
+      <a class="nav-item" href="question-paper.html">📄 Question Paper</a>
+      <a class="nav-item" href="reports.html">📄 Reports & Export</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-card"><div class="user-avatar"></div><div><div class="user-name"></div><div class="user-role"></div></div></div>
+      <button class="btn btn-ghost btn-sm w-full" data-action="logout" style="margin-top:8px">🚪 Logout</button>
+    </div>
+  </aside>
+  <main class="main-content">
+    <header class="topbar">
+      <div class="topbar-left">
+        <h1 class="topbar-title">Marks Entry</h1>
+        <div class="topbar-breadcrumb">Assessment <span>›</span> Marks Entry</div>
+      </div>
+      <div class="topbar-right">
+        <select class="form-control" id="course-select" style="width:260px"><option value="">— Select Course —</option></select>
+      </div>
+    </header>
+    <div class="page-content">
+      <!-- Main Tabs -->
+      <div class="tab-selector mb-lg">
+        <button class="t-btn active" onclick="switchTab('ia',this)">📝 Internal Assessment</button>
+        <button class="t-btn" onclick="switchTab('mse',this)">📄 Mid-Sem Exam</button>
+        <button class="t-btn" onclick="switchTab('ese',this)">📑 End-Sem Exam</button>
+        <button class="t-btn" onclick="switchTab('survey',this)">💬 Exit Survey</button>
+      </div>
+
+      <!-- IA/MSE/ESE Tab Content -->
+      <div id="tab-ia" class="tab-panel active">
+        <div class="card mb-lg">
+          <div class="card-header">
+            <div><div class="card-title" id="marks-tab-title">Internal Assessment</div><div class="card-subtitle">Configure questions and enter student marks</div></div>
+            <div style="display:flex;gap:8px">
+              <div class="assess-select" id="assess-no-ia">
+                <button class="assess-btn active" data-no="1" onclick="switchAssess('ia',1,this)">Assessment 1</button>
+                <button class="assess-btn" data-no="2" onclick="switchAssess('ia',2,this)">Assessment 2</button>
+              </div>
+              <button class="btn btn-secondary btn-sm" onclick="openPasteModal()">📋 Paste from Excel</button>
+              <button class="btn btn-primary btn-sm" onclick="saveMarks()">💾 Save Marks</button>
+            </div>
+          </div>
+          <!-- Question Structure -->
+          <div style="margin-bottom:16px">
+            <div class="flex-between mb-sm"><h4 style="font-size:14px;font-weight:700">Question Structure</h4><button class="btn btn-ghost btn-sm" onclick="addQuestion()">+ Add Question</button></div>
+            <div class="table-wrapper">
+              <table class="q-struct-table" id="q-struct-table">
+                <thead><tr><th>Q.No</th><th>Description</th><th style="width:100px">Blooms</th><th style="width:80px">CO</th><th style="width:80px">Max Marks</th><th style="width:60px">Del</th></tr></thead>
+                <tbody id="q-struct-body"></tbody>
+              </table>
+            </div>
+          </div>
+          <!-- Marks Entry Grid -->
+          <div>
+            <h4 style="font-size:14px;font-weight:700;margin-bottom:8px">Student Marks</h4>
+            <div class="table-wrapper" style="max-height:500px;overflow-y:auto">
+              <table id="marks-table">
+                <thead id="marks-head"></thead>
+                <tbody id="marks-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MSE Tab (reuses same structure) -->
+      <div id="tab-mse" class="tab-panel"></div>
+      <!-- ESE Tab -->
+      <div id="tab-ese" class="tab-panel"></div>
+
+      <!-- Survey Tab -->
+      <div id="tab-survey" class="tab-panel">
+        <div class="card">
+          <div class="card-header">
+            <div><div class="card-title">💬 Exit Survey (Course Feedback)</div><div class="card-subtitle">Student self-assessment per Course Outcome (1-5 scale)</div></div>
+            <button class="btn btn-primary btn-sm" onclick="saveSurvey()">💾 Save Survey</button>
+          </div>
+          <div class="table-wrapper" style="max-height:500px;overflow-y:auto">
+            <table id="survey-table">
+              <thead id="survey-head"></thead>
+              <tbody id="survey-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+<div id="toast-container"></div>
+<div id="paste-modal" class="modal-backdrop" style="display:none">
+  <div class="modal">
+    <div class="modal-header"><h3 class="modal-title">📋 Paste from Excel</h3><button class="modal-close" onclick="closePasteModal()">✕</button></div>
+    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px">Copy marks from Excel and paste below. Format: each row = student, columns separated by Tab.</p>
+    <textarea class="form-control" id="paste-area" rows="10" placeholder="Paste tab-separated data here..."></textarea>
+    <div class="modal-footer" style="margin-top:12px">
+      <button class="btn btn-secondary" onclick="closePasteModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="applyPaste()">Apply</button>
+    </div>
+  </div>
+</div>
+<script src="../scripts/data.js?v=2"></script>`r`n<script src="../scripts/api.js"></script>
+<script src="../scripts/auth.js?v=2"></script>
+<script src="../scripts/utils.js"></script>
+<script>
+(async () => {
+  await (window._apiReady || Promise.resolve());
+  const user = Auth.requireAuth(['faculty', 'hod']);
+if(!user) throw 0;
+Auth.populateSidebar(user);
+
+let CID = null;
+let currentTab = 'ia';
+let currentAssessNo = 1;
+let questions = [];
+let students = [];
+let cos = [];
+
+// Course selector
+const sel = document.getElementById('course-select');
+DB.courses.byFaculty(user.id).forEach(c => { const o=document.createElement('option'); o.value=c.id; o.textContent=`${c.code} – ${c.name}`; sel.appendChild(o); });
+const stored = sessionStorage.getItem('selected_course_id');
+const facCourses = DB.courses.byFaculty(user.id);
+if(stored && facCourses.find(c=>c.id===stored)) { sel.value=stored; loadCourse(stored); }
+else if(facCourses.length) { sel.value=facCourses[0].id; loadCourse(facCourses[0].id); }
+sel.addEventListener('change', e => { if(e.target.value){ sessionStorage.setItem('selected_course_id',e.target.value); loadCourse(e.target.value); }});
+
+function loadCourse(cid) {
+  CID = cid;
+  students = DB.students.byCourse(cid);
+  cos = DB.cos.byCourse(cid).filter(c=>c.text);
+  
+  loadTab(currentTab);
+  loadSurvey();
+
+  // Check Lock Status
+  setTimeout(() => {
+    const course = DB.courses.byId(cid);
+    const isLocked = course?.isLocked;
+    document.querySelectorAll('input, select, textarea, button[onclick="saveMarks()"], button[onclick="saveSurvey()"]').forEach(el => {
+      if (el.id !== 'course-select' && el.className.indexOf('t-btn') === -1) el.disabled = isLocked;
+    });
+    if (isLocked) Toast.warning('Course is locked by Audit. Mark entry is disabled.');
+  }, 100);
+}
+
+function switchTab(tab, btn) {
+  document.querySelectorAll('.t-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+
+  currentTab = tab;
+  if(tab === 'survey') {
+    document.getElementById('tab-survey').classList.add('active');
+    loadSurvey();
+  } else {
+    document.getElementById('tab-ia').classList.add('active');
+    currentAssessNo = 1;
+    loadTab(tab);
+    // Update title
+    const titles = {ia:'Internal Assessment',mse:'Mid-Semester Exam',ese:'End-Semester Exam'};
+    document.getElementById('marks-tab-title').textContent = titles[tab]||tab;
+    // Update assess buttons visibility
+    document.getElementById('assess-no-ia').style.display = tab==='ia'?'flex':'none';
+  }
+}
+
+function switchAssess(tab, no, btn) {
+  currentAssessNo = no;
+  document.querySelectorAll('.assess-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  loadTab(tab);
+}
+
+function loadTab(tab) {
+  if(!CID) return;
+  // Load question structure
+  const qStructs = DB.config.getIAQuestions(CID, tab);
+  const match = qStructs.find(q=>q.assessmentNo===currentAssessNo);
+  questions = match ? [...match.questions] : [];
+  if(!questions.length && tab==='ia') {
+    // Default 2 questions
+    questions = [{qNo:1,desc:'Question 1',bloomsLevel:'L3',coNo:1,maxMarks:3},{qNo:2,desc:'Question 2',bloomsLevel:'L3',coNo:2,maxMarks:3}];
+  }
+  renderQuestionStruct();
+  renderMarksGrid();
+}
+
+function renderQuestionStruct() {
+  const body = document.getElementById('q-struct-body');
+  body.innerHTML = '';
+  const blooms = ['L1','L2','L3','L4','L5','L6'];
+  questions.forEach((q,i) => {
+    const bOpts = blooms.map(b=>`<option value="${b}" ${q.bloomsLevel===b?'selected':''}>${b}</option>`).join('');
+    const coOpts = cos.map(c=>`<option value="${c.no}" ${q.coNo===c.no?'selected':''}>${c.code}</option>`).join('');
+    body.innerHTML += `<tr>
+      <td style="font-weight:700;text-align:center">Q${q.qNo}</td>
+      <td><textarea data-qi="${i}" data-f="desc" rows="1">${q.desc||''}</textarea></td>
+      <td><select class="form-control" data-qi="${i}" data-f="bloom" style="font-size:12px">${bOpts}</select></td>
+      <td><select class="form-control" data-qi="${i}" data-f="co" style="font-size:12px">${coOpts}</select></td>
+      <td><input type="number" class="marks-input" data-qi="${i}" data-f="max" value="${q.maxMarks}" min="1" max="50"></td>
+      <td><button class="btn btn-ghost btn-sm" onclick="removeQuestion(${i})" style="color:var(--danger)">✕</button></td>
+    </tr>`;
+  });
+}
+
+function addQuestion() {
+  readQuestionStructFromDOM();
+  const qNo = questions.length+1;
+  questions.push({qNo,desc:'',bloomsLevel:'L3',coNo:cos[0]?.no||1,maxMarks:5});
+  renderQuestionStruct();
+  renderMarksGrid();
+}
+
+function removeQuestion(i) {
+  readQuestionStructFromDOM();
+  questions.splice(i,1);
+  questions.forEach((q,idx)=>q.qNo=idx+1);
+  renderQuestionStruct();
+  renderMarksGrid();
+}
+
+function readQuestionStructFromDOM() {
+  document.querySelectorAll('[data-qi][data-f="desc"]').forEach(el=>{ questions[el.dataset.qi].desc=el.value; });
+  document.querySelectorAll('[data-qi][data-f="bloom"]').forEach(el=>{ questions[el.dataset.qi].bloomsLevel=el.value; });
+  document.querySelectorAll('[data-qi][data-f="co"]').forEach(el=>{ questions[el.dataset.qi].coNo=parseInt(el.value); });
+  document.querySelectorAll('[data-qi][data-f="max"]').forEach(el=>{ questions[el.dataset.qi].maxMarks=parseInt(el.value)||1; });
+}
+
+function renderMarksGrid() {
+  if(!CID || !questions.length) { document.getElementById('marks-body').innerHTML='<tr><td colspan="99" class="text-muted" style="text-align:center;padding:24px">Add questions above first</td></tr>'; return; }
+  const totalMax = questions.reduce((s,q)=>s+q.maxMarks,0);
+  // Head
+  let headHtml = '<tr><th>Sr</th><th>PRN</th><th>Name</th>';
+  questions.forEach(q=>headHtml+=`<th style="text-align:center;min-width:60px">Q${q.qNo}<br><span style="font-size:10px;color:var(--text-muted)">(${q.maxMarks})</span></th>`);
+  headHtml += '<th style="text-align:center">Total</th><th style="text-align:center">%</th><th style="text-align:center">Status</th></tr>';
+  document.getElementById('marks-head').innerHTML = headHtml;
+
+  // Get existing marks
+  const getMarksFn = currentTab==='ia' ? 'getIA' : currentTab==='mse' ? 'getMSE' : 'getESE';
+  const allMarks = DB.marks[getMarksFn](CID);
+
+  const body = document.getElementById('marks-body');
+  body.innerHTML = '';
+  students.forEach((s,si) => {
+    let rowHtml = `<tr><td>${si+1}</td><td style="font-size:12px">${s.prn}</td><td style="font-size:13px;font-weight:500">${s.name}</td>`;
+    let total = 0;
+    questions.forEach(q => {
+      let m;
+      if(currentTab==='ia') m = allMarks.find(x=>x.prn===s.prn&&x.assessmentNo===currentAssessNo&&x.qNo===q.qNo);
+      else m = allMarks.find(x=>x.prn===s.prn&&x.qNo===q.qNo);
+      const val = m ? m.marks : '';
+      total += (parseInt(val)||0);
+      rowHtml += `<td style="text-align:center"><input type="number" class="marks-input" data-prn="${s.prn}" data-qno="${q.qNo}" value="${val}" min="0" max="${q.maxMarks}" onchange="updateRowTotals(this.closest('tr'))"></td>`;
+    });
+    const pct = totalMax>0 ? Math.round((total/totalMax)*100) : 0;
+    const pass = pct >= 60;
+    rowHtml += `<td style="text-align:center;font-weight:700" class="row-total">${total}</td>`;
+    rowHtml += `<td style="text-align:center;font-size:12px" class="row-pct">${pct}%</td>`;
+    rowHtml += `<td style="text-align:center" class="row-status">${pass?'<span style="color:var(--success);font-weight:700">✓ Pass</span>':'<span style="color:var(--danger);font-weight:700">✕ Fail</span>'}</td></tr>`;
+    body.innerHTML += rowHtml;
+  });
+}
+
+function updateRowTotals(tr) {
+  if(!tr) return;
+  const inputs = tr.querySelectorAll('.marks-input');
+  let total=0; const maxTotal = questions.reduce((s,q)=>s+q.maxMarks,0);
+  inputs.forEach(inp=>total += parseInt(inp.value)||0);
+  const pct = maxTotal>0?Math.round((total/maxTotal)*100):0;
+  tr.querySelector('.row-total').textContent = total;
+  tr.querySelector('.row-pct').textContent = pct+'%';
+  tr.querySelector('.row-status').innerHTML = pct>=60?'<span style="color:var(--success);font-weight:700">✓ Pass</span>':'<span style="color:var(--danger);font-weight:700">✕ Fail</span>';
+}
+
+function saveMarks() {
+  if(!CID) { Toast.warning('Select a course first.'); return; }
+  readQuestionStructFromDOM();
+
+  // Save question structure
+  DB.config.saveIAQuestions(CID, currentTab, [{courseId:CID,assessmentType:currentTab,assessmentNo:currentAssessNo,questions}]);
+
+  // Save marks
+  const setFn = currentTab==='ia'?'setIA':currentTab==='mse'?'setMSE':'setESE';
+  document.querySelectorAll('#marks-body .marks-input').forEach(inp => {
+    const prn = inp.dataset.prn;
+    const qNo = parseInt(inp.dataset.qno);
+    const val = parseInt(inp.value)||0;
+    if(currentTab==='ia') DB.marks.setIA(CID,prn,currentAssessNo,qNo,val);
+    else if(currentTab==='mse') DB.marks.setMSE(CID,prn,qNo,val);
+    else DB.marks.setESE(CID,prn,qNo,val);
+  });
+  Toast.success('Marks saved successfully!');
+}
+
+// === Survey Tab ===
+function loadSurvey() {
+  if(!CID) return;
+  const activeCOs = cos.filter(c=>c.text);
+  let headHtml = '<tr><th>Sr</th><th>PRN</th><th>Name</th>';
+  activeCOs.forEach(c=>headHtml+=`<th style="text-align:center">${c.code}<br><span style="font-size:10px;color:var(--text-muted)">(1-5)</span></th>`);
+  headHtml += '<th style="text-align:center">Avg %</th><th style="text-align:center">Attained</th></tr>';
+  document.getElementById('survey-head').innerHTML = headHtml;
+
+  const body = document.getElementById('survey-body');
+  body.innerHTML = '';
+  students.forEach((s,si) => {
+    let html = `<tr><td>${si+1}</td><td style="font-size:12px">${s.prn}</td><td style="font-size:13px;font-weight:500">${s.name}</td>`;
+    let sum=0, count=0;
+    activeCOs.forEach(co => {
+      const score = DB.survey.getScore(CID, s.prn, co.no);
+      const val = score!==null&&score!==undefined ? score : '';
+      if(val) { sum+=parseInt(val); count++; }
+      html += `<td style="text-align:center"><input type="number" class="survey-input" data-prn="${s.prn}" data-co="${co.no}" value="${val}" min="1" max="5" onchange="updateSurveyRow(this.closest('tr'))"></td>`;
+    });
+    const avgPct = count>0 ? Math.round((sum/(count*5))*100) : 0;
+    const att = avgPct >= 60;
+    html += `<td style="text-align:center;font-weight:700" class="surv-avg">${count?avgPct+'%':'—'}</td>`;
+    html += `<td style="text-align:center" class="surv-att">${count?(att?'<span style="color:var(--success);font-weight:700">✓ Yes</span>':'<span style="color:var(--danger);font-weight:700">✕ No</span>'):'—'}</td></tr>`;
+    body.innerHTML += html;
+  });
+
+  // Class average row
+  let avgHtml = '<tr style="background:rgba(37,99,235,0.15)"><td></td><td></td><td style="font-weight:700;font-size:13px">Class Average</td>';
+  activeCOs.forEach(co => {
+    const scores = students.map(s=>DB.survey.getScore(CID,s.prn,co.no)).filter(v=>v!==null&&v!==undefined);
+    const avg = scores.length ? (scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1) : '—';
+    avgHtml += `<td style="text-align:center;font-weight:700;color:var(--primary)">${avg}</td>`;
+  });
+  avgHtml += '<td></td><td></td></tr>';
+  body.innerHTML += avgHtml;
+}
+
+function updateSurveyRow(tr) {
+  const inputs = tr.querySelectorAll('.survey-input');
+  let sum=0, count=0;
+  inputs.forEach(inp => { const v=parseInt(inp.value); if(v) { sum+=v; count++; } });
+  const pct = count>0 ? Math.round((sum/(count*5))*100) : 0;
+  tr.querySelector('.surv-avg').textContent = count ? pct+'%' : '—';
+  tr.querySelector('.surv-att').innerHTML = count?(pct>=60?'<span style="color:var(--success);font-weight:700">✓ Yes</span>':'<span style="color:var(--danger);font-weight:700">✕ No</span>'):'—';
+}
+
+function saveSurvey() {
+  if(!CID) return;
+  document.querySelectorAll('.survey-input').forEach(inp => {
+    const prn = inp.dataset.prn;
+    const co = parseInt(inp.dataset.co);
+    const val = parseInt(inp.value);
+    if(val >= 1 && val <= 5) DB.survey.setScore(CID, prn, co, val);
+  });
+  Toast.success('Exit survey data saved!');
+}
+
+// === Paste Modal ===
+function openPasteModal() { document.getElementById('paste-modal').style.display='flex'; }
+function closePasteModal() { document.getElementById('paste-modal').style.display='none'; document.getElementById('paste-area').value=''; }
+function applyPaste() {
+  const text = document.getElementById('paste-area').value;
+  const rows = text.trim().split('\n').map(r=>r.split('\t').map(c=>c.trim()));
+  if(!rows.length) { Toast.warning('No data to paste.'); return; }
+  // Map rows to student marks
+  const marksInputs = document.querySelectorAll('#marks-body tr');
+  rows.forEach((cols,ri) => {
+    if(ri >= marksInputs.length) return;
+    const inputs = marksInputs[ri].querySelectorAll('.marks-input');
+    cols.forEach((val,ci) => { if(ci < inputs.length) { inputs[ci].value = parseInt(val)||0; } });
+    updateRowTotals(marksInputs[ri]);
+  });
+  closePasteModal();
+  Toast.success(`Applied ${rows.length} rows from clipboard!`);
+}
+})();
+</script>
+<script src="../scripts/ai-chat.js"></script>\n</body>
+</html>

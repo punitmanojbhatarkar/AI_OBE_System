@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign In | OBE Management System – MITAOE</title>
+  <meta name="description" content="Sign in to the OBE Management System – MIT Academy of Engineering, Alandi, Pune">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      background: #F1F5F9;
+    }
+
+    /* ── Left Panel ── */
+    .left-panel {
+      width: 45%;
+      min-height: 100vh;
+      background: #0F172A;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 48px;
+      position: relative;
+      overflow: hidden;
+    }
+    .left-panel::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: 
+        radial-gradient(circle at 20% 20%, rgba(37,99,235,0.3) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(59,130,246,0.15) 0%, transparent 50%);
+      pointer-events: none;
+    }
+    .left-panel-content { position: relative; z-index: 1; }
+
+    /* Grid decoration */
+    .left-panel::after {
+      content: '';
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+      background-size: 48px 48px;
+      pointer-events: none;
+    }
+
+    .brand { display: flex; align-items: center; gap: 14px; margin-bottom: 64px; }
+    .brand-icon {
+      width: 48px; height: 48px;
+      background: #2563EB;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; font-weight: 800; color: #fff;
+      letter-spacing: -0.5px;
+      box-shadow: 0 8px 24px rgba(37,99,235,0.4);
+    }
+    .brand-text { color: #F8FAFC; font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }
+    .brand-sub  { color: #64748B; font-size: 12px; font-weight: 500; margin-top: 2px; }
+
+    .left-headline { color: #F8FAFC; font-size: 34px; font-weight: 800; letter-spacing: -1px; line-height: 1.2; margin-bottom: 20px; }
+    .left-headline span { color: #60A5FA; }
+    .left-desc { color: #94A3B8; font-size: 15px; line-height: 1.7; margin-bottom: 40px; font-weight: 400; }
+
+    .feature-list { display: flex; flex-direction: column; gap: 16px; }
+    .feature-item { display: flex; align-items: center; gap: 12px; }
+    .feature-dot {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: rgba(37,99,235,0.2);
+      border: 1px solid rgba(37,99,235,0.3);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; flex-shrink: 0;
+    }
+    .feature-text { color: #CBD5E1; font-size: 13.5px; font-weight: 500; }
+
+    .left-footer { color: #475569; font-size: 12px; position: relative; z-index: 1; }
+
+    /* ── Right Panel ── */
+    .right-panel {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 64px;
+      background: #F1F5F9;
+    }
+    .login-box {
+      width: 100%; max-width: 420px;
+    }
+    .login-header { margin-bottom: 36px; }
+    .login-header h1 {
+      font-size: 26px; font-weight: 800;
+      color: #0F172A; letter-spacing: -0.5px;
+      margin-bottom: 8px;
+    }
+    .login-header p { font-size: 14px; color: #64748B; }
+
+    .form-group { margin-bottom: 20px; }
+    .form-label {
+      display: block; font-size: 13px; font-weight: 600;
+      color: #0F172A; margin-bottom: 7px;
+    }
+    .form-control {
+      width: 100%; padding: 11px 14px;
+      background: #FFFFFF; border: 1.5px solid #E2E8F0;
+      border-radius: 10px; color: #0F172A; font-size: 14px;
+      transition: all 0.15s ease; outline: none;
+      font-family: inherit;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    }
+    .form-control:focus {
+      border-color: #2563EB;
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
+    }
+    .form-control::placeholder { color: #94A3B8; }
+
+    .btn-login {
+      width: 100%; padding: 13px;
+      background: #2563EB;
+      border: none; border-radius: 10px;
+      color: #fff; font-size: 15px; font-weight: 700;
+      cursor: pointer; transition: all 0.15s ease;
+      box-shadow: 0 4px 14px rgba(37,99,235,0.3);
+      font-family: inherit;
+      letter-spacing: -0.2px;
+      margin-top: 4px;
+    }
+    .btn-login:hover {
+      background: #1D4ED8;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(37,99,235,0.4);
+    }
+    .btn-login:active { transform: translateY(0); }
+
+    .divider {
+      display: flex; align-items: center; gap: 12px;
+      margin: 24px 0;
+    }
+    .divider-line { flex: 1; height: 1px; background: #E2E8F0; }
+    .divider-text { font-size: 12px; color: #94A3B8; font-weight: 600; white-space: nowrap; }
+
+    .quick-logins {
+      background: #FFFFFF; border: 1px solid #E2E8F0;
+      border-radius: 12px; padding: 16px; 
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    .quick-logins-title {
+      font-size: 11px; font-weight: 700; color: #64748B;
+      text-transform: uppercase; letter-spacing: 0.08em;
+      margin-bottom: 12px;
+    }
+    .demo-role {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 9px 12px; border-radius: 8px; cursor: pointer;
+      transition: background 0.15s ease;
+      border: 1px solid transparent;
+    }
+    .demo-role:hover {
+      background: #EFF6FF; border-color: #BFDBFE;
+    }
+    .demo-role-left { display: flex; align-items: center; gap: 10px; }
+    .demo-role-icon {
+      width: 30px; height: 30px; border-radius: 7px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 700; color: #fff;
+    }
+    .demo-role-icon.admin   { background: #0F172A; }
+    .demo-role-icon.faculty { background: #2563EB; }
+    .demo-role-icon.hod     { background: #059669; }
+    .demo-role-icon.student { background: #D97706; }
+    .demo-role-name { font-weight: 700; font-size: 13px; color: #0F172A; }
+    .demo-role-email{ font-size: 11.5px; color: #64748B; margin-top: 1px; }
+    .demo-role-btn {
+      font-size: 11px; padding: 4px 10px;
+      background: #EFF6FF; color: #2563EB;
+      border-radius: 6px; font-weight: 700;
+      transition: all 0.15s;
+    }
+    .demo-role:hover .demo-role-btn { background: #2563EB; color: #fff; }
+
+    #error-msg {
+      background: #FEF2F2; border: 1px solid #FECACA;
+      color: #DC2626; padding: 11px 14px; border-radius: 9px;
+      font-size: 13px; margin-bottom: 20px; display: none;
+      font-weight: 500;
+    }
+
+    @media (max-width: 900px) {
+      .left-panel { display: none; }
+      .right-panel { padding: 32px 24px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Left Panel -->
+  <div class="left-panel">
+    <div class="left-panel-content">
+      <div class="brand">
+        <div class="brand-icon">OBE</div>
+        <div>
+          <div class="brand-text">OBE Management System</div>
+          <div class="brand-sub">MIT Academy of Engineering</div>
+        </div>
+      </div>
+
+      <div class="left-headline">
+        Outcome-Based Education<br>
+        <span>Made Simple.</span>
+      </div>
+      <div class="left-desc">
+        A comprehensive platform for faculty to manage Course Outcomes, track attainment, generate AI-powered assessments, and produce NAAC/NBA-ready reports.
+      </div>
+
+      <div class="feature-list">
+        <div class="feature-item">
+          <div class="feature-dot">🎯</div>
+          <div class="feature-text">CO & PO mapping with attainment tracking</div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-dot">🤖</div>
+          <div class="feature-text">AI-powered assignment generation & auto-grading</div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-dot">📊</div>
+          <div class="feature-text">NAAC/NBA-ready reports with one click</div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-dot">💡</div>
+          <div class="feature-text">Smart OBE advisor with actionable suggestions</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="left-footer">
+      © 2025-26 MIT Academy of Engineering, Alandi (D), Pune – 412105
+    </div>
+  </div>
+
+  <!-- Right Panel -->
+  <div class="right-panel">
+    <div class="login-box">
+      <div class="login-header">
+        <h1>Welcome back 👋</h1>
+        <p>Sign in to your OBE account to continue</p>
+      </div>
+
+      <div id="error-msg"></div>
+
+      <form id="login-form">
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          <input type="email" id="email" class="form-control" placeholder="you@mitaoe.ac.in" required autofocus>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" id="password" class="form-control" placeholder="Enter your password" required>
+        </div>
+        <button type="submit" class="btn-login">Sign In →</button>
+      </form>
+
+      <div class="divider">
+        <div class="divider-line"></div>
+        <div class="divider-text">Quick Login</div>
+        <div class="divider-line"></div>
+      </div>
+
+      <div class="quick-logins">
+        <div class="quick-logins-title">Demo Accounts — Click to fill</div>
+        <div class="demo-role" onclick="fill('admin@mitaoe.ac.in','admin123')">
+          <div class="demo-role-left">
+            <div class="demo-role-icon admin">A</div>
+            <div>
+              <div class="demo-role-name">Admin</div>
+              <div class="demo-role-email">admin@mitaoe.ac.in</div>
+            </div>
+          </div>
+          <div class="demo-role-btn">Fill</div>
+        </div>
+        <div class="demo-role" onclick="fill('vwangikar@mitaoe.ac.in','faculty123')">
+          <div class="demo-role-left">
+            <div class="demo-role-icon faculty">F</div>
+            <div>
+              <div class="demo-role-name">Faculty</div>
+              <div class="demo-role-email">vwangikar@mitaoe.ac.in</div>
+            </div>
+          </div>
+          <div class="demo-role-btn">Fill</div>
+        </div>
+        <div class="demo-role" onclick="fill('hod.ds@mitaoe.ac.in','hod123')">
+          <div class="demo-role-left">
+            <div class="demo-role-icon hod">H</div>
+            <div>
+              <div class="demo-role-name">HOD</div>
+              <div class="demo-role-email">hod.ds@mitaoe.ac.in</div>
+            </div>
+          </div>
+          <div class="demo-role-btn">Fill</div>
+        </div>
+        <div class="demo-role" onclick="fill('om.sutar@mitaoe.ac.in','student123')">
+          <div class="demo-role-left">
+            <div class="demo-role-icon student">S</div>
+            <div>
+              <div class="demo-role-name">Student</div>
+              <div class="demo-role-email">om.sutar@mitaoe.ac.in</div>
+            </div>
+          </div>
+          <div class="demo-role-btn">Fill</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="scripts/data.js"></script>
+  <script src="scripts/auth.js"></script>
+  <script>
+    if (Auth.getUser()) { Auth.redirectToDashboard(); }
+
+    const form   = document.getElementById('login-form');
+    const emailIn = document.getElementById('email');
+    const passIn  = document.getElementById('password');
+    const errDiv  = document.getElementById('error-msg');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errDiv.style.display = 'none';
+      const res = await Auth.login(emailIn.value, passIn.value);
+      if (res.ok) {
+        Auth.redirectToDashboard();
+      } else {
+        errDiv.textContent = '⚠️ ' + res.error;
+        errDiv.style.display = 'block';
+      }
+    });
+
+    function fill(email, pass) {
+      emailIn.value = email;
+      passIn.value  = pass;
+      emailIn.focus();
+    }
+  </script>
+<script src="../scripts/ai-chat.js"></script>\n</body>
+</html>
